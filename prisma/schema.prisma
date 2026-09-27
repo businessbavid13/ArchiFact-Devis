@@ -1,0 +1,167 @@
+// Prisma schema for ArchiFact Devis
+// Defines the database structure for invoices, quotes, articles, clients, and settings
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoices Invoice[]
+  quotes   Quote[]
+
+  @@index([name])
+}
+
+model Article {
+  id        String   @id @default(uuid())
+  name      String
+  description String?
+  unitPrice Float
+  unit      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documentItems DocumentItem[] @relation("ArticleDocumentItem")
+
+  @@index([name])
+}
+
+model DocumentItem {
+  id        String   @id @default(uuid())
+  articleId String?
+  name      String
+  description String?
+  quantity  Float
+  unitPrice Float
+  total     Float
+
+  // Relation to Invoice
+  invoiceId String?
+  invoice   Invoice? @relation("InvoiceItems", fields: [invoiceId], references: [id])
+
+  // Relation to Quote
+  quoteId String?
+  quote   Quote? @relation("QuoteItems", fields: [quoteId], references: [id])
+
+  article Article? @relation("ArticleDocumentItem", fields: [articleId], references: [id])
+
+  @@index([invoiceId])
+  @@index([quoteId])
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  number        String
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id])
+  date          DateTime
+  dueDate       DateTime
+  subtotal      Float
+  discountType  String   @default("fixed") // fixed or percent
+  discountValue Float    @default(0)
+  taxRate       Float    @default(0) // percentage
+  taxAmount     Float    @default(0)
+  additionalTaxName    String?
+  additionalTaxRate    Float?
+  additionalTaxAmount  Float?
+  total         Float
+  paymentMode   String?
+  terms         String?
+  status        String   @default("pending") // pending, paid, overdue
+  scannedPagesUrls String[]?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items DocumentItem[] @relation("InvoiceItems")
+
+  @@index([number])
+  @@index([clientId])
+  @@index([status])
+}
+
+model Quote {
+  id            String   @id @default(uuid())
+  number        String
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id])
+  date          DateTime
+  expirationDate DateTime
+  subtotal      Float
+  discountType  String   @default("fixed") // fixed or percent
+  discountValue Float    @default(0)
+  taxRate       Float    @default(0) // percentage
+  taxAmount     Float    @default(0)
+  additionalTaxName    String?
+  additionalTaxRate    Float?
+  additionalTaxAmount  Float?
+  total         Float
+  paymentMode   String?
+  terms         String?
+  status        String   @default("pending") // pending, accepted, declined
+  scannedPagesUrls String[]?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items DocumentItem[] @relation("QuoteItems")
+
+  @@index([number])
+  @@index([clientId])
+  @@index([status])
+}
+
+model CompanySettings {
+  id                  String   @id @default(uuid())
+  name                String
+  legalStatus         String?
+  email               String?
+  phone               String?
+  address             String?
+  taxId               String? // NIF / SIRET
+  logoUrl             String?
+  headerImageUrl      String?
+  headerText          String?
+  footerText          String?
+  footerImageUrl      String?
+  signatureUrl        String?
+  signatureImageUrl   String?
+  currency            String   @default("FCFA")
+  language            String   @default("Français")
+  numberFormat        String   @default("1 000 000")
+  dateFormat          String   @default("DD/MM/YYYY")
+  invoiceDueDays      Int      @default(7)
+  showPaymentStatus   Boolean  @default(true)
+  documentTemplate    String   @default("Archi & Moderne")
+  invoiceColor        String   @default("#0F5132") // Architectural Forest Emerald
+  quoteColor          String   @default("#C2410C") // Architectural Terracotta & Bronze
+  invoiceOpacity      Int      @default(100) // 0 to 100
+  signatureScale      Int      @default(100) // 0 to 100
+  paymentModes        String[] @default(["Wave Mobile Money", "Orange Money (+225 07 00 00 00)", "MTN MoMo (+225 05 00 00 00)", "Virement bancaire", "Espèces à la livraison"])
+  termsAndConditions  String[] @default(["Paiement dû sous 7 jours suivant la réception.", "Pénalité de retard de 1.5% par mois de retard.", "Marchandise livrée sous réserve de propriété jusqu’au paiement complet."])
+  taxOptions          Json     @default([{name: "TVA standard (18%)", rate: 18}, {name: "Taux réduit (5%)", rate: 5}, {name: "Exonéré (0%)", rate: 0}])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([name])
+}
+
+model CreditOffer {
+  id       String   @id @default(uuid())
+  credits  Int
+  priceFcfa Int
+  popular  Boolean @default(false)
+  bestValue Boolean @default(false)
+  createdAt DateTime @default(now())
+}

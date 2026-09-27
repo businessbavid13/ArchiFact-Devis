@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node ./node_modules/prisma/dist/prisma.js generate)",
+      "Bash(node src/backend/server.ts)",
+      "Bash(./node_modules/.bin/ts-node src/backend/server.ts)",
+      "Bash(node dist/backend/server.js)",
+      "Bash(node dist/backend/backend/server.js)"
+    ]
+  }
+}

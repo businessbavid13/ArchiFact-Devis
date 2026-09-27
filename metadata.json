@@ -1,0 +1,6 @@
+{
+  "name": "ArchiFact Devis",
+  "description": "Application mobile d'architecture, devis et facturation professionnelle pour artisans, bâtisseurs et créateurs.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
