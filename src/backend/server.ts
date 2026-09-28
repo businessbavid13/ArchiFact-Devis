@@ -18,13 +18,36 @@ import {
   AuthenticatedUser,
   CreditOperation,
 } from './credits';
+import {
+  clientKey,
+  createRateLimiter,
+  requestIdMiddleware,
+  userOrClientKey,
+  writeSecurityAudit,
+} from './security';
 
 const app = express();
 const port = process.env.PORT || 5000;
+const allowedOrigins = new Set(
+  (process.env.CORS_ORIGIN || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
 
 // Middleware
+app.set('trust proxy', 1);
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000' }));
+app.use(requestIdMiddleware);
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error('CORS origin not allowed'));
+  },
+}));
 app.use('/webhooks/geniuspay', express.raw({ type: 'application/json' }));
 app.use(express.json({
   limit: '10mb',
@@ -37,6 +60,38 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Initialize Gemini AI
 const apiKey = process.env.GEMINI_API_KEY;
 const genai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+const authHookRateLimiter = createRateLimiter('auth-hook', {
+  windowMs: 5 * 60_000,
+  max: 30,
+  key: clientKey,
+});
+const webhookRateLimiter = createRateLimiter('payment-webhook', {
+  windowMs: 5 * 60_000,
+  max: 120,
+  key: clientKey,
+});
+const authenticatedRateLimiter = createRateLimiter('authenticated', {
+  windowMs: 60_000,
+  max: 90,
+  key: userOrClientKey,
+});
+const aiRateLimiter = createRateLimiter('ai', {
+  windowMs: 60_000,
+  max: 12,
+  key: userOrClientKey,
+});
+const paymentRateLimiter = createRateLimiter('payment', {
+  windowMs: 10 * 60_000,
+  max: 10,
+  key: userOrClientKey,
+});
+const sensitiveIpRateLimiter = createRateLimiter('sensitive-ip', {
+  windowMs: 60_000,
+  max: 120,
+  key: clientKey,
+});
+
+app.use(['/api', '/ai'], sensitiveIpRateLimiter);
 
 type AuthenticatedRequest = Request & { user: AuthenticatedUser };
 type RawBodyRequest = Request & { rawBody?: string };
@@ -115,6 +170,41 @@ function creditErrorStatus(error: unknown): number {
   return 500;
 }
 
+const creditOperations = new Set<CreditOperation>([
+  'AI_QUOTE_FROM_IMAGE',
+  'AI_INVOICE_FROM_IMAGE',
+  'AI_ARTICLE_FROM_IMAGE',
+  'AI_VOICE_COMMAND',
+  'AI_OCR_ANALYSIS',
+]);
+
+const acceptedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+function isBoundedString(value: unknown, maxLength: number): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= maxLength;
+}
+
+function isValidBase64(value: unknown, maxLength: number): value is string {
+  return typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= maxLength &&
+    /^[A-Za-z0-9+/]*={0,2}$/.test(value);
+}
+
+type ImageInput = { base64: string; mimeType: string };
+
+function isImageInput(value: unknown): value is ImageInput {
+  if (!value || typeof value !== 'object') return false;
+  const image = value as Record<string, unknown>;
+  return isValidBase64(image.base64, 8_000_000) &&
+    typeof image.mimeType === 'string' &&
+    acceptedImageMimeTypes.has(image.mimeType);
+}
+
+function isValidPhoneNumber(value: unknown): value is string {
+  return typeof value === 'string' && /^[0-9+()\s.-]{7,24}$/.test(value);
+}
+
 async function reserveForRequest(
   req: Request,
   operation: CreditOperation,
@@ -123,7 +213,7 @@ async function reserveForRequest(
   return reserveCredits(getAuthenticatedUser(req).id, operation, reference);
 }
 
-app.post('/auth/hooks/send-email', async (req: Request, res: Response) => {
+app.post('/auth/hooks/send-email', authHookRateLimiter, async (req: Request, res: Response) => {
   const rawBody = (req as RawBodyRequest).rawBody || JSON.stringify(req.body || {});
   const hookSecret = process.env.AUTH_HOOK_SECRET;
   let payload: AuthEmailHookPayload;
@@ -139,12 +229,14 @@ app.post('/auth/hooks/send-email', async (req: Request, res: Response) => {
     } else {
       const authorization = req.header('authorization')?.replace(/^Bearer\s+/i, '');
       if (!constantTimeSecretMatch(authorization, hookSecret)) {
+        void writeSecurityAudit({ req, eventType: 'auth.email_hook_rejected', success: false });
         res.status(401).json({ error: 'Invalid auth hook signature' });
         return;
       }
       payload = req.body as AuthEmailHookPayload;
     }
   } catch {
+    void writeSecurityAudit({ req, eventType: 'auth.email_hook_rejected', success: false });
     res.status(401).json({ error: 'Invalid auth hook signature' });
     return;
   }
@@ -153,22 +245,26 @@ app.post('/auth/hooks/send-email', async (req: Request, res: Response) => {
   const token = payload.email_data?.token;
   const actionType = payload.email_data?.email_action_type || 'magic_link';
   if (!email || !token) {
+    void writeSecurityAudit({ req, eventType: 'auth.email_hook_invalid_payload', success: false });
     res.status(400).json({ error: 'Invalid auth email payload' });
     return;
   }
 
   try {
     await sendAuthEmail(email, token, actionType);
+    void writeSecurityAudit({ req, eventType: 'auth.otp_email_sent', metadata: { action_type: actionType } });
     res.status(200).json({});
   } catch (error) {
-    console.error('Error sending auth email:', error);
+    console.error('Error sending auth email:', error instanceof Error ? error.message : 'unknown error');
+    void writeSecurityAudit({ req, eventType: 'auth.otp_email_failed', success: false, metadata: { action_type: actionType } });
     res.status(502).json({ error: 'Unable to send auth email' });
   }
 });
 
-app.post('/webhooks/geniuspay', async (req: Request, res: Response) => {
+app.post('/webhooks/geniuspay', webhookRateLimiter, async (req: Request, res: Response) => {
   const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : JSON.stringify(req.body || {});
   if (!verifyGeniusPaySignature(rawBody, req.header('x-geniuspay-signature'))) {
+    void writeSecurityAudit({ req, eventType: 'payment.webhook_rejected', success: false });
     res.status(401).json({ error: 'Invalid webhook signature' });
     return;
   }
@@ -195,9 +291,11 @@ app.post('/webhooks/geniuspay', async (req: Request, res: Response) => {
       p_provider_reference: providerReference,
     });
     if (error) throw error;
+    void writeSecurityAudit({ req, eventType: 'payment.webhook_processed', metadata: { provider: 'geniuspay' } });
     res.status(200).json({ received: true, result: data });
   } catch (error) {
-    console.error('Error in GeniusPay webhook:', error);
+    console.error('Error in GeniusPay webhook:', error instanceof Error ? error.message : 'unknown error');
+    void writeSecurityAudit({ req, eventType: 'payment.webhook_failed', success: false });
     res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
@@ -207,7 +305,7 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/me/credits', requireAuth, async (req: Request, res: Response) => {
+app.get('/api/me/credits', requireAuth, authenticatedRateLimiter, async (req: Request, res: Response) => {
   try {
     res.json(await getWallet(getAuthenticatedUser(req).id));
   } catch (error) {
@@ -215,7 +313,7 @@ app.get('/api/me/credits', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/credits/plans', requireAuth, async (_req: Request, res: Response) => {
+app.get('/api/credits/plans', requireAuth, authenticatedRateLimiter, async (_req: Request, res: Response) => {
   try {
     res.json({ plans: await getCreditPlans() });
   } catch (error) {
@@ -223,20 +321,29 @@ app.get('/api/credits/plans', requireAuth, async (_req: Request, res: Response) 
   }
 });
 
-app.post('/api/credits/reserve', requireAuth, async (req: Request, res: Response) => {
+app.post('/api/credits/reserve', requireAuth, authenticatedRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { operation, reference } = req.body as { operation?: CreditOperation; reference?: string };
-    if (!operation) {
+    const body = req.body as Record<string, unknown>;
+    const operation = body.operation;
+    const reference = body.reference;
+    if (typeof operation !== 'string' || !creditOperations.has(operation as CreditOperation)) {
       res.status(400).json({ error: 'operation is required' });
       return;
     }
-    res.json(await reserveForRequest(req, operation, reference || crypto.randomUUID()));
+    if (reference !== undefined && !isBoundedString(reference, 128)) {
+      res.status(400).json({ error: 'reference is invalid' });
+      return;
+    }
+    const result = await reserveForRequest(req, operation as CreditOperation, typeof reference === 'string' ? reference : crypto.randomUUID());
+    void writeSecurityAudit({ req, eventType: 'credits.reserved', metadata: { operation } });
+    res.json(result);
   } catch (error) {
+    void writeSecurityAudit({ req, eventType: 'credits.reserve_failed', success: false });
     res.status(creditErrorStatus(error)).json({ error: 'Unable to reserve credits' });
   }
 });
 
-app.post('/api/credits/:action', requireAuth, async (req: Request, res: Response) => {
+app.post('/api/credits/:action', requireAuth, authenticatedRateLimiter, async (req: Request, res: Response) => {
   try {
     const { reservationId } = req.body as { reservationId?: string };
     if (!reservationId || !['complete', 'refund'].includes(req.params.action)) {
@@ -247,20 +354,30 @@ app.post('/api/credits/:action', requireAuth, async (req: Request, res: Response
     const result = req.params.action === 'complete'
       ? await completeReservation(userId, reservationId)
       : await refundReservation(userId, reservationId);
+    void writeSecurityAudit({ req, eventType: `credits.${req.params.action}`, metadata: { reservation_id: reservationId } });
     res.json(result);
   } catch (error) {
+    void writeSecurityAudit({ req, eventType: `credits.${req.params.action}_failed`, success: false });
     res.status(creditErrorStatus(error)).json({ error: 'Unable to update credit reservation' });
   }
 });
 
-app.post('/api/payments/geniuspay/create', requireAuth, async (req: Request, res: Response) => {
+app.post('/api/payments/geniuspay/create', requireAuth, paymentRateLimiter, async (req: Request, res: Response) => {
   try {
     if (!adminSupabase) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
     const { planId, paymentMethod, phoneNumber } = req.body as {
-      planId?: string;
-      paymentMethod?: string;
-      phoneNumber?: string;
+      planId?: unknown;
+      paymentMethod?: unknown;
+      phoneNumber?: unknown;
     };
+    const acceptedPaymentMethods = new Set(['wave', 'orange_money', 'mtn_momo', 'card']);
+    if (!isBoundedString(planId, 80) ||
+      typeof paymentMethod !== 'string' ||
+      !acceptedPaymentMethods.has(paymentMethod) ||
+      !isValidPhoneNumber(phoneNumber)) {
+      res.status(400).json({ error: 'Invalid payment details' });
+      return;
+    }
     const plans = await getCreditPlans();
     const plan = plans.find((item) => item.id === planId);
     if (!plan) {
@@ -296,12 +413,15 @@ app.post('/api/payments/geniuspay/create', requireAuth, async (req: Request, res
       }),
     });
     if (!providerResponse.ok) {
+      void writeSecurityAudit({ req, eventType: 'payment.initialization_failed', success: false });
       res.status(502).json({ error: 'GeniusPay payment initialization failed' });
       return;
     }
+    void writeSecurityAudit({ req, eventType: 'payment.initialized', metadata: { provider: 'geniuspay', plan_id: plan.id } });
     res.status(201).json({ reference, plan, provider: await providerResponse.json() });
   } catch (error) {
-    console.error('Error creating GeniusPay payment:', error);
+    console.error('Error creating GeniusPay payment:', error instanceof Error ? error.message : 'unknown error');
+    void writeSecurityAudit({ req, eventType: 'payment.create_failed', success: false });
     res.status(creditErrorStatus(error)).json({ error: 'Unable to initialize payment' });
   }
 });
@@ -309,24 +429,17 @@ app.post('/api/payments/geniuspay/create', requireAuth, async (req: Request, res
 // AI Analysis Endpoints
 
 // Analyze image(s) for document extraction
-app.post('/ai/analyze-image', requireAuth, async (req: Request, res: Response) => {
+app.post('/ai/analyze-image', requireAuth, aiRateLimiter, async (req: Request, res: Response) => {
   let reservationId: string | undefined;
   try {
     if (!genai) {
       return res.status(500).json({ error: 'Gemini AI not initialized' });
     }
 
-    const { images } = req.body;
+    const { images } = req.body as { images?: unknown };
 
-    if (!images || !Array.isArray(images) || images.length === 0) {
+    if (!Array.isArray(images) || images.length === 0 || images.length > 8 || !images.every(isImageInput)) {
       return res.status(400).json({ error: 'Images array is required' });
-    }
-
-    // Validate each image
-    for (const img of images) {
-      if (!img.base64 || !img.mimeType) {
-        return res.status(400).json({ error: 'Each image must have base64 and mimeType' });
-      }
     }
 
     const reservation = await reserveForRequest(req, 'AI_OCR_ANALYSIS', crypto.randomUUID());
@@ -394,6 +507,11 @@ app.post('/ai/analyze-image', requireAuth, async (req: Request, res: Response) =
     }
 
     await completeReservation(getAuthenticatedUser(req).id, reservationId);
+    void writeSecurityAudit({
+      req,
+      eventType: 'ai.image_analysis_completed',
+      metadata: { image_count: images.length },
+    });
     res.status(200).json({
       success: true,
       data: parsedData
@@ -402,22 +520,25 @@ app.post('/ai/analyze-image', requireAuth, async (req: Request, res: Response) =
     if (reservationId) {
       await refundReservation(getAuthenticatedUser(req).id, reservationId).catch(() => undefined);
     }
-    console.error('Error in analyze-image:', error);
+    console.error('Error in analyze-image:', error instanceof Error ? error.message : 'unknown error');
+    void writeSecurityAudit({ req, eventType: 'ai.image_analysis_failed', success: false });
     res.status(creditErrorStatus(error)).json({ error: 'Internal server error' });
   }
 });
 
 // Transcribe audio to text
-app.post('/ai/transcribe-audio', requireAuth, async (req: Request, res: Response) => {
+app.post('/ai/transcribe-audio', requireAuth, aiRateLimiter, async (req: Request, res: Response) => {
   let reservationId: string | undefined;
   try {
     if (!genai) {
       return res.status(500).json({ error: 'Gemini AI not initialized' });
     }
 
-    const { audioBase64, mimeType } = req.body;
+    const { audioBase64, mimeType } = req.body as { audioBase64?: unknown; mimeType?: unknown };
 
-    if (!audioBase64 || !mimeType) {
+    if (!isValidBase64(audioBase64, 8_000_000) ||
+      typeof mimeType !== 'string' ||
+      !mimeType.startsWith('audio/')) {
       return res.status(400).json({ error: 'Audio data and mimeType are required' });
     }
 
@@ -467,6 +588,7 @@ app.post('/ai/transcribe-audio', requireAuth, async (req: Request, res: Response
     }
 
     await completeReservation(getAuthenticatedUser(req).id, reservationId);
+    void writeSecurityAudit({ req, eventType: 'ai.audio_transcription_completed' });
     res.status(200).json({
       success: true,
       data: parsedData
@@ -475,22 +597,23 @@ app.post('/ai/transcribe-audio', requireAuth, async (req: Request, res: Response
     if (reservationId) {
       await refundReservation(getAuthenticatedUser(req).id, reservationId).catch(() => undefined);
     }
-    console.error('Error in transcribe-audio:', error);
+    console.error('Error in transcribe-audio:', error instanceof Error ? error.message : 'unknown error');
+    void writeSecurityAudit({ req, eventType: 'ai.audio_transcription_failed', success: false });
     res.status(creditErrorStatus(error)).json({ error: 'Internal server error' });
   }
 });
 
 // Parse business command from text
-app.post('/ai/parse-command', requireAuth, async (req: Request, res: Response) => {
+app.post('/ai/parse-command', requireAuth, aiRateLimiter, async (req: Request, res: Response) => {
   let reservationId: string | undefined;
   try {
     if (!genai) {
       return res.status(500).json({ error: 'Gemini AI not initialized' });
     }
 
-    const { text } = req.body;
+    const { text } = req.body as { text?: unknown };
 
-    if (!text) {
+    if (!isBoundedString(text, 2_000)) {
       return res.status(400).json({ error: 'Text is required' });
     }
 
@@ -532,6 +655,7 @@ app.post('/ai/parse-command', requireAuth, async (req: Request, res: Response) =
     }
 
     await completeReservation(getAuthenticatedUser(req).id, reservationId);
+    void writeSecurityAudit({ req, eventType: 'ai.command_parsing_completed' });
     res.status(200).json({
       success: true,
       data: parsedData
@@ -540,14 +664,16 @@ app.post('/ai/parse-command', requireAuth, async (req: Request, res: Response) =
     if (reservationId) {
       await refundReservation(getAuthenticatedUser(req).id, reservationId).catch(() => undefined);
     }
-    console.error('Error in parse-command:', error);
+    console.error('Error in parse-command:', error instanceof Error ? error.message : 'unknown error');
+    void writeSecurityAudit({ req, eventType: 'ai.command_parsing_failed', success: false });
     res.status(creditErrorStatus(error)).json({ error: 'Internal server error' });
   }
 });
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
+  console.error(err.message);
+  void writeSecurityAudit({ req, eventType: 'http.unhandled_error', success: false });
   res.status(500).json({ error: 'Internal server error' });
 });
 
