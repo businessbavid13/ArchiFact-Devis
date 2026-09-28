@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Camera, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send } from 'lucide-react';
+import { ArrowLeft, ArrowRight, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send, Smartphone, UserRound, Zap } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -30,10 +30,6 @@ function ProductIllustration() {
 
   return (
     <div className="relative mx-auto h-52 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 p-4 shadow-inner sm:h-56 lg:h-64 lg:p-5">
-      <div className="relative z-10 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
-        <span>Photo → document</span>
-        <span className="rounded-full bg-white/80 px-2 py-1 text-blue-600 shadow-sm">en quelques secondes</span>
-      </div>
       <motion.div
         className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-blue-200/40 blur-2xl"
         animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.12, 1], opacity: [0.45, 0.7, 0.45] }}
@@ -45,32 +41,50 @@ function ProductIllustration() {
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      <div className="absolute inset-x-5 bottom-5 top-14 flex items-center justify-between gap-2">
+      <div className="absolute inset-x-5 bottom-4 top-4 flex items-center justify-between gap-2">
         <motion.div
-          className="relative w-[42%] rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-200/70"
+          className="relative flex w-[31%] flex-col items-center justify-end self-end"
           initial={{ opacity: 0, x: -14 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="relative flex h-20 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-700 to-slate-950">
-            <Camera className="h-8 w-8 text-white" strokeWidth={1.5} />
-            {!shouldReduceMotion && (
-              <motion.span
-                className="absolute inset-x-0 top-0 h-0.5 bg-teal-300 shadow-[0_0_12px_#5eead4]"
-                animate={{ y: [0, 76, 0] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            )}
+          <div className="relative z-10 grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-lg shadow-blue-300/60">
+            <UserRound className="h-7 w-7" strokeWidth={1.7} />
           </div>
-          <p className="mt-2 text-center text-[11px] font-bold text-slate-700">Prenez une photo</p>
+          <div className="-mt-2 h-14 w-20 rounded-t-[2rem] bg-gradient-to-br from-blue-600 to-teal-600 shadow-lg shadow-blue-200/70" />
+          <motion.div
+            className="absolute bottom-8 right-0 z-20 grid h-12 w-7 -rotate-12 place-items-center rounded-md border-2 border-slate-700 bg-slate-950 text-white shadow-lg"
+            animate={shouldReduceMotion ? { rotate: -12 } : { rotate: [-12, -8, -12], y: [0, -2, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <Smartphone className="h-7 w-7" strokeWidth={1.6} />
+            <span className="absolute inset-x-1 top-2 h-0.5 rounded-full bg-teal-300 shadow-[0_0_8px_#5eead4]" />
+          </motion.div>
         </motion.div>
+
+        <div className="relative flex w-[20%] items-center justify-center">
+          <motion.div
+            className="grid h-10 w-10 place-items-center rounded-full bg-white text-blue-600 shadow-lg shadow-blue-200/70"
+            animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.16, 1] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <Zap className="h-5 w-5 fill-current" />
+          </motion.div>
+          {!shouldReduceMotion && (
+            <motion.span
+              className="absolute left-0 right-0 top-1/2 h-0.5 origin-left rounded-full bg-gradient-to-r from-blue-300 to-teal-300"
+              animate={{ scaleX: [0.35, 1, 0.35], opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+        </div>
 
         <AnimatePresence mode="wait">
           <motion.div
             key={documentType}
-            className="w-[50%] rounded-2xl border border-teal-100 bg-white p-3 shadow-xl shadow-teal-100/70"
-            initial={{ opacity: 0, x: 14, rotate: 4 }}
-            animate={{ opacity: 1, x: 0, rotate: 4 }}
+            className="relative w-[45%] rounded-2xl border border-teal-100 bg-white p-3 shadow-xl shadow-teal-100/70"
+            initial={{ opacity: 0, x: 18, rotate: 5, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, rotate: 4, scale: 1 }}
             exit={{ opacity: 0, x: -8, rotate: 0 }}
             transition={{ duration: 0.35 }}
           >
