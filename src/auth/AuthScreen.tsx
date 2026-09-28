@@ -42,6 +42,14 @@ function ProductIllustration() {
 
   return (
     <div className="relative mx-auto h-52 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 p-4 shadow-inner sm:h-56 lg:h-64 lg:p-5">
+      <motion.img
+        src="/branding/onboarding-documents.webp"
+        alt="Documents ArchiFact prêts à être envoyés"
+        className="absolute inset-0 z-10 h-full w-full object-contain p-2"
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      />
       <motion.div
         className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-blue-200/40 blur-2xl"
         animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.12, 1], opacity: [0.45, 0.7, 0.45] }}

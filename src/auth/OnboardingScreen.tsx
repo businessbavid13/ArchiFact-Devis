@@ -24,16 +24,19 @@ const slides = [
     title: 'Créez vos devis simplement',
     description: 'Des documents professionnels en quelques secondes.',
     type: 'quote',
+    image: '/branding/onboarding-quote.webp',
   },
   {
     title: 'Une photo suffit',
     description: 'Photographiez vos informations et laissez l’IA créer votre devis ou votre facture.',
     type: 'scan',
+    image: '/branding/onboarding-scan.webp',
   },
   {
     title: 'Vos documents, comme vous les voulez',
     description: 'Téléchargez vos devis et factures en PDF ou en Excel modifiable.',
     type: 'export',
+    image: '/branding/onboarding-export.webp',
   },
 ] as const;
 
@@ -234,9 +237,20 @@ export function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -24 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
           >
-            <div className="mb-3 flex justify-center">
-              <Illustration type={slide.type} />
-            </div>
+            <motion.div
+              className="mb-3 flex justify-center"
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.94, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+            >
+              <motion.img
+                src={slide.image}
+                alt=""
+                className="h-72 w-full max-w-sm object-contain"
+                animate={shouldReduceMotion ? undefined : { y: [0, -5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            </motion.div>
             <div className="text-center">
               <h1 className="text-[2.1rem] font-bold leading-[1.08] tracking-[-0.045em] text-[#0b1f3b]">
                 {slide.title}
