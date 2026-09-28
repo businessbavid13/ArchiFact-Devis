@@ -118,12 +118,6 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
 
         recognitionRef.current = recognition;
 
-        // Auto-start listening on open
-        try {
-          recognition.start();
-        } catch {
-          // ignore if already started
-        }
       } catch (err) {
         console.warn('Error setting up speech recognition:', err);
       }

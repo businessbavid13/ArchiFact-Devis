@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MobileStatusBar } from '../components/StatusBar/MobileStatusBar';
 import { AppHeader } from '../components/Header/AppHeader';
@@ -42,6 +42,12 @@ function AppLayoutInner() {
   const ctx = useAppContext();
 
   const activeTab = pathToTab(location.pathname);
+
+  useEffect(() => {
+    ctx.setIsPhotoScanOpen(false);
+    ctx.setIsCreditsModalOpen(false);
+    ctx.setPreviewData(null);
+  }, [location.pathname]);
 
   const handleTabChange = (tab: TabType) => {
     navigate(tabToPath(tab));
@@ -150,6 +156,8 @@ function AppLayoutInner() {
           onClose={() => ctx.setIsCreditsModalOpen(false)}
           currentCredits={ctx.credits}
           plans={ctx.creditPlans}
+          isLoading={ctx.creditsLoading}
+          loadError={ctx.creditsError}
           onCreatePayment={ctx.createPayment}
         />
 

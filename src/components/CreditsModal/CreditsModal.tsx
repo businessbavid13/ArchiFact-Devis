@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Sparkles, Check, CreditCard, Smartphone, CheckCircle, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
+import { X, Sparkles, Check, CreditCard, Smartphone, CheckCircle, ShieldCheck, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../Button/Button';
 import { CreditPlan } from '../../types';
 import { formatCurrency } from '../../utils/formatting';
@@ -9,6 +9,8 @@ interface CreditsModalProps {
   onClose: () => void;
   currentCredits: number;
   plans: CreditPlan[];
+  isLoading: boolean;
+  loadError: string | null;
   onCreatePayment: (planId: string, paymentMethod: string, phoneNumber: string) => Promise<{ reference: string }>;
 }
 
@@ -17,6 +19,8 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
   onClose,
   currentCredits,
   plans,
+  isLoading,
+  loadError,
   onCreatePayment,
 }) => {
   const [selectedPlan, setSelectedPlan] = useState<CreditPlan | null>(null);
@@ -24,6 +28,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
   const [phoneNumber, setPhoneNumber] = useState('07 00 00 00 00');
   const [isProcessing, setIsProcessing] = useState(false);
   const [successResult, setSuccessResult] = useState<{ credits: number; tx: string } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedPlan && plans.length > 0) setSelectedPlan(plans[0]);
@@ -33,13 +38,14 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
 
   const handleConfirmPurchase = async () => {
     setIsProcessing(true);
+    setErrorMessage(null);
     try {
       if (!selectedPlan) throw new Error('Aucun forfait disponible');
       const res = await onCreatePayment(selectedPlan.id, paymentMethod, phoneNumber);
       setSuccessResult({ credits: selectedPlan.credits, tx: res.reference });
     } catch (error) {
       setSuccessResult(null);
-      window.alert(error instanceof Error ? error.message : 'Paiement indisponible');
+      setErrorMessage(error instanceof Error ? error.message : 'Paiement indisponible');
     } finally {
       setIsProcessing(false);
     }
@@ -47,6 +53,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
 
   const handleCloseAll = () => {
     setSuccessResult(null);
+    setErrorMessage(null);
     onClose();
   };
 
@@ -114,8 +121,8 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                   </div>
                 </div>
                 <div className="text-right text-[11px] text-slate-400 leading-snug">
-                  <p>1 crédit = 1 document</p>
-                  <p className="text-slate-500">ou devis multi-pages</p>
+                  <p>Le coût dépend de l'opération IA</p>
+                  <p className="text-slate-500">Le scan OCR coûte 100 crédits</p>
                 </div>
               </div>
 
@@ -128,8 +135,24 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                   <span className="text-[11px] text-slate-500 font-normal">Sans abonnement</span>
                 </div>
 
-                <div className="space-y-2">
-                  {plans.map((offer) => {
+                {(errorMessage || loadError) && (
+                  <div role="alert" className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{errorMessage || loadError}</span>
+                  </div>
+                )}
+
+                {isLoading ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-600">
+                    Chargement des forfaits...
+                  </div>
+                ) : plans.length === 0 ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-600">
+                    Impossible de charger les forfaits pour le moment. Réessayez dans quelques instants.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {plans.map((offer) => {
                     const isSelected = selectedPlan?.id === offer.id;
                     return (
                       <div
@@ -168,8 +191,9 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                         </div>
                       </div>
                     );
-                  })}
-                </div>
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Payment methods */}
@@ -270,7 +294,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
               size="md"
               fullWidth
               onClick={handleConfirmPurchase}
-              disabled={isProcessing}
+              disabled={isProcessing || isLoading || !selectedPlan || plans.length === 0}
               icon={isProcessing ? undefined : ArrowRight}
             >
               {isProcessing ? (

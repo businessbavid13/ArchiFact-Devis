@@ -17,6 +17,7 @@ import {
 import { Button } from '../Button/Button';
 import { processPhotoDocument, SAMPLE_DOCUMENTS, SampleDocumentType } from '../../services/photoGeneration';
 import { PhotoScanExtract, ScannedPageItem } from '../../types';
+import { AI_CREDIT_COSTS } from '../../constants/aiCosts';
 
 interface PhotoScanModalProps {
   isOpen: boolean;
@@ -97,11 +98,15 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
     let reservationId: string | undefined;
     try {
       const result = scannedPages.length > 0
-        ? await onAnalyzeImages(
+        ? {
+            ...(await onAnalyzeImages(
           scannedPages
             .map((page) => page.file)
             .filter((file): file is File => file !== undefined)
-        )
+            )),
+            scannedPagesCount: scannedPages.length,
+            scannedPagesUrls: scannedPages.map((page) => page.previewUrl),
+          }
         : await (async () => {
           const reservation = await onReserveCredits();
           reservationId = reservation.reservation_id;
@@ -144,6 +149,13 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
   };
 
   const activePagesCount = scannedPages.length > 0 ? scannedPages.length : (selectedSample?.includes('multipage') ? 2 : 1);
+  const requiredCredits = scannedPages.length > 0
+    ? AI_CREDIT_COSTS.AI_OCR_ANALYSIS
+    : documentType === 'article'
+      ? AI_CREDIT_COSTS.AI_ARTICLE_FROM_IMAGE
+      : documentType === 'quote'
+        ? AI_CREDIT_COSTS.AI_QUOTE_FROM_IMAGE
+        : AI_CREDIT_COSTS.AI_INVOICE_FROM_IMAGE;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -157,7 +169,7 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
             <div>
               <h3 className="text-sm font-bold tracking-tight text-white">{typeLabels[documentType]}</h3>
               <p className="text-[11px] text-slate-400 font-normal">
-                Support multi-pages • 1 crédit • Fusion automatique
+                Support multi-pages • {requiredCredits} crédits • Fusion automatique
               </p>
             </div>
           </div>
@@ -180,10 +192,12 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
                 <p className="text-xs font-semibold text-blue-900">
                   Solde : <span className="font-bold">{creditsBalance} crédits</span>
                 </p>
-                <p className="text-[11px] text-blue-700">1 crédit pour l'ensemble du document</p>
+                <p className="text-[11px] text-blue-700">
+                  {requiredCredits} crédits pour cette analyse
+                </p>
               </div>
             </div>
-            {creditsBalance < 1 ? (
+            {creditsBalance < requiredCredits ? (
               <button
                 type="button"
                 onClick={onOpenCreditStore}
@@ -455,7 +469,7 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
             Annuler
           </Button>
 
-          {creditsBalance < 1 ? (
+          {creditsBalance < requiredCredits ? (
             <Button
               variant="amber"
               size="md"

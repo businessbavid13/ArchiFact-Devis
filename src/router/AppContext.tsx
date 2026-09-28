@@ -37,6 +37,8 @@ interface AppContextType {
   credits: number;
   plan: string;
   creditPlans: ReturnType<typeof useCredits>['plans'];
+  creditsLoading: ReturnType<typeof useCredits>['isLoading'];
+  creditsError: ReturnType<typeof useCredits>['error'];
   reserveCredits: ReturnType<typeof useCredits>['reserveCredits'];
   completeCreditReservation: ReturnType<typeof useCredits>['completeReservation'];
   refundCreditReservation: ReturnType<typeof useCredits>['refundReservation'];
@@ -198,6 +200,8 @@ export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }
     credits: creditsHook.credits,
     plan: creditsHook.plan,
     creditPlans: creditsHook.plans,
+    creditsLoading: creditsHook.isLoading,
+    creditsError: creditsHook.error,
     reserveCredits: creditsHook.reserveCredits,
     completeCreditReservation: creditsHook.completeReservation,
     refundCreditReservation: creditsHook.refundReservation,
