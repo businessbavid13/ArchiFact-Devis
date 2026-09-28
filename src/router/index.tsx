@@ -1,14 +1,24 @@
 import { createHashRouter, Navigate } from 'react-router-dom';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { AppLayout } from './AppLayout';
-import { InvoicesPage } from './pages/InvoicesPage';
-import { InvoiceFormPage } from './pages/InvoiceFormPage';
-import { QuotesPage } from './pages/QuotesPage';
-import { QuoteFormPage } from './pages/QuoteFormPage';
-import { ArticlesPage } from './pages/ArticlesPage';
-import { ClientsPage } from './pages/ClientsPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { CustomizationPage } from './pages/CustomizationPage';
-import { HomePage } from './pages/HomePage';
+
+const InvoicesPage = lazy(() => import('./pages/InvoicesPage').then(({ InvoicesPage }) => ({ default: InvoicesPage })));
+const InvoiceFormPage = lazy(() => import('./pages/InvoiceFormPage').then(({ InvoiceFormPage }) => ({ default: InvoiceFormPage })));
+const QuotesPage = lazy(() => import('./pages/QuotesPage').then(({ QuotesPage }) => ({ default: QuotesPage })));
+const QuoteFormPage = lazy(() => import('./pages/QuoteFormPage').then(({ QuoteFormPage }) => ({ default: QuoteFormPage })));
+const ArticlesPage = lazy(() => import('./pages/ArticlesPage').then(({ ArticlesPage }) => ({ default: ArticlesPage })));
+const ClientsPage = lazy(() => import('./pages/ClientsPage').then(({ ClientsPage }) => ({ default: ClientsPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then(({ SettingsPage }) => ({ default: SettingsPage })));
+const CustomizationPage = lazy(() => import('./pages/CustomizationPage').then(({ CustomizationPage }) => ({ default: CustomizationPage })));
+const HomePage = lazy(() => import('./pages/HomePage').then(({ HomePage }) => ({ default: HomePage })));
+
+function RouteFallback() {
+  return <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">Chargement...</div>;
+}
+
+function lazyRoute(element: ReactNode) {
+  return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
+}
 
 /**
  * Application router configuration.
@@ -20,27 +30,27 @@ export const router = createHashRouter([
     element: <AppLayout />,
     children: [
       // Default redirect
-      { index: true, element: <HomePage /> },
+      { index: true, element: lazyRoute(<HomePage />) },
 
       // Invoices
-      { path: 'invoices', element: <InvoicesPage /> },
-      { path: 'invoices/new', element: <InvoiceFormPage /> },
-      { path: 'invoices/:id', element: <InvoiceFormPage /> },
+      { path: 'invoices', element: lazyRoute(<InvoicesPage />) },
+      { path: 'invoices/new', element: lazyRoute(<InvoiceFormPage />) },
+      { path: 'invoices/:id', element: lazyRoute(<InvoiceFormPage />) },
 
       // Quotes
-      { path: 'quotes', element: <QuotesPage /> },
-      { path: 'quotes/new', element: <QuoteFormPage /> },
-      { path: 'quotes/:id', element: <QuoteFormPage /> },
+      { path: 'quotes', element: lazyRoute(<QuotesPage />) },
+      { path: 'quotes/new', element: lazyRoute(<QuoteFormPage />) },
+      { path: 'quotes/:id', element: lazyRoute(<QuoteFormPage />) },
 
       // Articles
-      { path: 'articles', element: <ArticlesPage /> },
+      { path: 'articles', element: lazyRoute(<ArticlesPage />) },
 
       // Clients
-      { path: 'clients', element: <ClientsPage /> },
+      { path: 'clients', element: lazyRoute(<ClientsPage />) },
 
       // Settings
-      { path: 'settings', element: <SettingsPage /> },
-      { path: 'settings/customization', element: <CustomizationPage /> },
+      { path: 'settings', element: lazyRoute(<SettingsPage />) },
+      { path: 'settings/customization', element: lazyRoute(<CustomizationPage />) },
 
       // Catch-all
       { path: '*', element: <Navigate to="/invoices" replace /> },
