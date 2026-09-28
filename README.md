@@ -35,4 +35,6 @@ La connexion utilise `supabase.auth.signInWithOtp` puis `verifyOtp`, et crée au
 2. le fournisseur Google avec son Client ID et son Client Secret ;
 3. un **Send Email Hook** pointant vers `POST /auth/hooks/send-email`, avec un secret partagé `AUTH_HOOK_SECRET`.
 
+Le frontend utilise `VITE_AUTH_REDIRECT_URL` lorsqu’elle est définie, sinon l’origine courante du navigateur. Cette URL doit être ajoutée aux redirections autorisées Supabase et aux origines JavaScript autorisées dans Google Cloud.
+
 Le hook envoie les codes OTP à Resend avec `RESEND_API_KEY`, `RESEND_FROM_EMAIL` et `RESEND_FROM_NAME`. Le sujet et le contenu distinguent les actions `signup` et `signin` sans exposer l’existence d’un compte au navigateur. Le domaine d’envoi doit être vérifié dans Resend. À défaut du hook, configure le SMTP personnalisé Supabase avec les identifiants SMTP Resend et personnalise le template OTP Supabase.
