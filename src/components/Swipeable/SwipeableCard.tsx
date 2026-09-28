@@ -162,6 +162,26 @@ export const SwipeableCard: React.FC<SwipeableCardProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled || e.target !== e.currentTarget) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick?.();
+    } else if ((e.key === 'Delete' || e.key === 'Backspace') && onSwipeLeft) {
+      e.preventDefault();
+      onSwipeLeft();
+    } else if (e.key === 'ArrowRight' && onSwipeRight) {
+      e.preventDefault();
+      onSwipeRight();
+    }
+  };
+
+  const keyboardHint = [
+    onClick ? 'Entrée pour ouvrir' : null,
+    onSwipeRight ? `Flèche droite : ${rightActionText}` : null,
+    onSwipeLeft ? `Suppr : ${leftActionText}` : null,
+  ].filter(Boolean).join(', ');
+
   const isSwipingRight = offsetX > 15;
   const isSwipingLeft = offsetX < -15;
   const isPastRightThreshold = offsetX > TRIGGER_THRESHOLD;
@@ -216,7 +236,11 @@ export const SwipeableCard: React.FC<SwipeableCardProps> = ({
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         onClick={handleCardClick}
-        className="w-full relative z-10"
+        onKeyDown={handleKeyDown}
+        tabIndex={disabled ? -1 : 0}
+        aria-keyshortcuts={keyboardHint || undefined}
+        title={keyboardHint || undefined}
+        className="w-full relative z-10 rounded-lg"
       >
         {children}
       </div>

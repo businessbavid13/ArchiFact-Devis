@@ -3,12 +3,14 @@ import { Search, Plus, Trash2, Package, FileText, Coins, Camera } from 'lucide-r
 import { Button } from '../../components/Button/Button';
 import { Article } from '../../types';
 import { formatCurrency } from '../../utils/formatting';
+import { DialogPanel } from '../../components/Dialog/DialogPanel';
 
 interface ArticlesScreenProps {
   articles: Article[];
   onAddArticle: (article: Article) => void;
   onUpdateArticle: (article: Article) => void;
   onDeleteArticle: (id: string) => void;
+  onRestoreArticle: (article: Article) => void;
   onScanArticlePhoto: () => void;
 }
 
@@ -17,11 +19,19 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
   onAddArticle,
   onUpdateArticle,
   onDeleteArticle,
+  onRestoreArticle,
   onScanArticlePhoto,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [undoArticle, setUndoArticle] = useState<Article | null>(null);
+
+  const handleDeleteArticle = (article: Article) => {
+    onDeleteArticle(article.id);
+    setUndoArticle(article);
+    window.setTimeout(() => setUndoArticle((current) => current?.id === article.id ? null : current), 5000);
+  };
 
   // Form fields matching screenshot 10
   const [name, setName] = useState('');
@@ -133,12 +143,11 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`Supprimer ${art.name} ?`)) {
-                      onDeleteArticle(art.id);
-                    }
+                    handleDeleteArticle(art);
                   }}
                   className="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
                   title="Supprimer"
+                  aria-label={`Supprimer ${art.name}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -147,6 +156,22 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
           ))
         )}
       </div>
+
+      {undoArticle && (
+        <div role="status" className="fixed bottom-20 left-4 right-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg bg-slate-900 px-4 py-3 text-white shadow-xl">
+          <span className="text-xs">Article supprimé</span>
+          <button
+            type="button"
+            onClick={() => {
+              onRestoreArticle(undoArticle);
+              setUndoArticle(null);
+            }}
+            className="min-h-9 rounded-md px-3 text-xs font-bold text-blue-200 hover:bg-white/10"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
 
       {/* Floating Action Button (Matching screenshot 4: + Nouvel Article/Service) */}
       <div className="fixed bottom-20 right-5 z-20 flex flex-col items-end gap-2">
@@ -174,9 +199,9 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
       {/* Modal Nouvel Article / Service (Matching screenshot 10) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+          <DialogPanel onClose={() => setIsModalOpen(false)} aria-labelledby="article-modal-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900">
+              <h3 id="article-modal-title" className="text-sm font-bold text-slate-900">
                 {editingArticle ? "Modifier l'article" : 'Nouvel Article/Service'}
               </h3>
               <button
@@ -255,7 +280,7 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
                 </Button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
     </div>

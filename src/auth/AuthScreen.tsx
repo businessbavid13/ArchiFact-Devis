@@ -50,7 +50,7 @@ function ProductIllustration() {
       <motion.div
         className="relative flex h-24 w-20 flex-col justify-between rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-400 p-3 text-white shadow-xl shadow-blue-200/70 sm:h-28 sm:w-24 lg:h-36 lg:w-28 lg:p-4"
         animate={shouldReduceMotion ? undefined : { y: [0, -7, 0], rotate: [0, 2, 0] }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 3.2, repeat: 2, ease: 'easeInOut' }}
       >
         <div className="h-2 w-10 rounded-full bg-white/90" />
         <div className="space-y-1.5">
@@ -63,7 +63,7 @@ function ProductIllustration() {
       <motion.div
         className="absolute ml-24 grid h-11 w-11 place-items-center rounded-full bg-teal-500 text-white shadow-lg shadow-teal-200/80 sm:ml-28 lg:ml-36 lg:h-14 lg:w-14"
         animate={shouldReduceMotion ? undefined : { scale: [1, 1.1, 1] }}
-        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 2.2, repeat: 2, ease: 'easeInOut' }}
       >
         <Check className="h-6 w-6" strokeWidth={3} />
       </motion.div>

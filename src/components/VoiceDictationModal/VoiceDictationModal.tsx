@@ -15,6 +15,7 @@ import {
 import { DocumentItem } from '../../types';
 import { parseVoiceDictation } from '../../utils/voiceParser';
 import { formatCurrency } from '../../utils/formatting';
+import { DialogPanel } from '../Dialog/DialogPanel';
 
 // Web Speech API type declarations (non-standard, vendor-prefixed)
 interface SpeechRecognitionEvent extends Event {
@@ -224,7 +225,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" role="presentation">
-      <div role="dialog" aria-modal="true" aria-labelledby="voice-dictation-modal-title" className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-modal-enter">
+      <DialogPanel onClose={onClose} aria-labelledby="voice-dictation-modal-title" className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-modal-enter">
         {/* Header */}
         <div className="px-4 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
@@ -521,7 +522,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
             </span>
           </button>
         </div>
-      </div>
+      </DialogPanel>
     </div>
   );
 };

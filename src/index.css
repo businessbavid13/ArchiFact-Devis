@@ -66,11 +66,11 @@
 }
 
 .animate-modal-enter {
-  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalEnter var(--motion-standard) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in-fast {
-  animation: fadeIn 0.15s ease-out forwards;
+  animation: fadeIn var(--motion-fast) ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
