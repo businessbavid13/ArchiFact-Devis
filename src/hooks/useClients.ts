@@ -1,28 +1,56 @@
 import { useCallback } from 'react';
 import { Client } from '../types';
-import { usePersistedState } from './usePersistedState';
-import { INITIAL_CLIENTS } from '../data/mockData';
+import { normalizeLegacyId, useSupabaseCollection } from './useSupabaseCollection';
 
-export function useClients() {
-  const [clients, setClients] = usePersistedState<Client[]>('df_clients', INITIAL_CLIENTS);
+function mapClient(row: Record<string, unknown>): Client {
+  return {
+    id: String(row.id),
+    name: String(row.name || ''),
+    email: row.email as string | undefined,
+    phone: row.phone as string | undefined,
+    address: row.address as string | undefined,
+    createdAt: String(row.created_at || new Date().toISOString()),
+  };
+}
+
+function clientToRow(client: Client): Record<string, unknown> {
+  return {
+    id: normalizeLegacyId(client.id),
+    name: client.name,
+    email: client.email || null,
+    phone: client.phone || null,
+    address: client.address || null,
+    created_at: client.createdAt,
+  };
+}
+
+export function useClients(userId: string | null) {
+  const collection = useSupabaseCollection<Client>({
+    table: 'clients',
+    userId,
+    localStorageKey: 'df_clients',
+    mapRow: mapClient,
+    toRow: clientToRow,
+  });
 
   const addClient = useCallback((client: Client) => {
-    setClients((prev) => [client, ...prev]);
-  }, [setClients]);
+    void collection.save(client);
+  }, [collection.save]);
 
   const updateClient = useCallback((client: Client) => {
-    setClients((prev) => prev.map((item) => (item.id === client.id ? client : item)));
-  }, [setClients]);
+    void collection.save(client);
+  }, [collection.save]);
 
   const deleteClient = useCallback((id: string) => {
-    setClients((prev) => prev.filter((item) => item.id !== id));
-  }, [setClients]);
+    void collection.remove(id);
+  }, [collection.remove]);
 
   return {
-    clients,
-    setClients,
+    clients: collection.items,
+    setClients: collection.setItems,
     addClient,
     updateClient,
     deleteClient,
+    isLoading: collection.isLoading,
   };
 }

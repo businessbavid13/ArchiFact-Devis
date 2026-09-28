@@ -68,7 +68,7 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
       });
     } else {
       const newArticle: Article = {
-        id: `art-${Date.now()}`,
+        id: crypto.randomUUID(),
         name: name.trim(),
         description: description.trim() || 'Pas de description',
         unitPrice: priceNum,

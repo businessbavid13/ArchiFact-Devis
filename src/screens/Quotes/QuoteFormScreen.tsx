@@ -121,7 +121,7 @@ export const QuoteFormScreen: React.FC<QuoteFormScreenProps> = ({
 
   const handleSave = () => {
     const newQuote: Quote = {
-      id: initialQuote ? initialQuote.id : `quote-${Date.now()}`,
+      id: initialQuote ? initialQuote.id : crypto.randomUUID(),
       number: quoteNumber,
       clientId: selectedClientId,
       date,

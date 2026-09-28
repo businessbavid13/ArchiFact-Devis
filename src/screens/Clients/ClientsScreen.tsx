@@ -68,7 +68,7 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
       });
     } else {
       const newClient: Client = {
-        id: `cli-${Date.now()}`,
+        id: crypto.randomUUID(),
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim(),

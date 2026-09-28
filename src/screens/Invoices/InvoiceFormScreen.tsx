@@ -122,7 +122,7 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
 
   const handleSave = () => {
     const newInvoice: Invoice = {
-      id: initialInvoice ? initialInvoice.id : `inv-${Date.now()}`,
+      id: initialInvoice ? initialInvoice.id : crypto.randomUUID(),
       number: invoiceNumber,
       clientId: selectedClientId,
       date,

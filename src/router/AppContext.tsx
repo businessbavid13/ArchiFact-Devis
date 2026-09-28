@@ -12,7 +12,6 @@ interface AppContextType {
   deleteInvoice: (id: string) => void;
   updateInvoiceStatus: (id: string, newStatus: 'paid' | 'pending' | 'overdue') => void;
   duplicateInvoice: (invoice: Invoice) => void;
-  setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
 
   quotes: Quote[];
   saveQuote: (quote: Quote) => void;
@@ -28,7 +27,6 @@ interface AppContextType {
   addBulkArticles: (articles: Article[]) => void;
 
   clients: Client[];
-  setClients: React.Dispatch<React.SetStateAction<Client[]>>;
   addClient: (client: Client) => void;
   updateClient: (client: Client) => void;
   deleteClient: (id: string) => void;
@@ -81,12 +79,13 @@ interface AppProviderProps {
 
 export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }: AppProviderProps) {
   const { session } = useAuth();
+  const userId = session?.user.id ?? null;
   // Domain hooks
-  const invoiceHook = useInvoices();
-  const quoteHook = useQuotes();
-  const articleHook = useArticles();
-  const clientHook = useClients();
-  const settingsHook = useSettings();
+  const invoiceHook = useInvoices(userId);
+  const quoteHook = useQuotes(userId);
+  const articleHook = useArticles(userId);
+  const clientHook = useClients(userId);
+  const settingsHook = useSettings(userId);
   const creditsHook = useCredits(session);
 
   // UI state
@@ -111,14 +110,14 @@ export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }
         matchedClientId = existingClient.id;
       } else {
         const newClient: Client = {
-          id: `cli-${Date.now()}`,
+          id: crypto.randomUUID(),
           name: extract.clientName,
           phone: '07 00 00 00',
           email: `${extract.clientName.toLowerCase().replace(/\s+/g, '')}@example.com`,
           address: 'Abidjan',
           createdAt: new Date().toISOString(),
         };
-        clientHook.setClients((prev) => [...prev, newClient]);
+        clientHook.addClient(newClient);
         matchedClientId = newClient.id;
       }
     }
@@ -134,7 +133,7 @@ export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }
 
     if (photoScanTarget === 'article') {
       const newCatalogArticles: Article[] = extract.items.map((it, idx) => ({
-        id: `art-scan-${Date.now()}-${idx}`,
+        id: crypto.randomUUID(),
         name: it.name,
         description: it.description || 'Généré par photo OCR',
         unitPrice: it.unitPrice,
@@ -147,7 +146,7 @@ export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }
 
     if (photoScanTarget === 'invoice') {
       const newInv: Invoice = {
-        id: `inv-${Date.now()}`,
+        id: crypto.randomUUID(),
         number: `FACT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
         clientId: matchedClientId,
         date: extract.date || '14/09/2026',
@@ -169,7 +168,7 @@ export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }
 
     if (photoScanTarget === 'quote') {
       const newQuo: Quote = {
-        id: `quote-${Date.now()}`,
+        id: crypto.randomUUID(),
         number: `DEV-${String(Math.floor(Math.random() * 9000) + 1000)}`,
         clientId: matchedClientId,
         date: extract.date || '14/09/2026',

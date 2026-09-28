@@ -24,7 +24,7 @@ export function QuotesPage() {
 
   const handleConvertToInvoice = (quote: Quote) => {
     const newInvoice = ctx.convertQuoteToInvoice(quote);
-    ctx.setInvoices((prev) => [newInvoice, ...prev]);
+    ctx.saveInvoice(newInvoice);
     navigate('/invoices');
   };
 
