@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send, UserRound, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Download, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -41,76 +41,88 @@ function ProductIllustration() {
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      <div className="absolute inset-x-4 bottom-3 top-3 flex items-center justify-between gap-2">
+      <div className="absolute inset-x-3 bottom-4 top-4 flex items-center justify-between gap-1">
         <motion.div
-          className="relative flex h-full w-[38%] items-center justify-end"
-          initial={{ opacity: 0, x: -14 }}
+          className="flex w-[22%] flex-col items-center gap-2"
+          initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.45 }}
         >
-          <div className="absolute bottom-0 left-0 h-20 w-20 rounded-t-[2.5rem] bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 shadow-lg shadow-blue-300/60" />
-          <div className="absolute bottom-[4.5rem] left-5 z-10 h-11 w-11 rounded-full border-2 border-blue-800 bg-[#f3c5a3] shadow-md">
-            <div className="absolute -left-0.5 -top-1 h-3 w-10 rounded-full bg-slate-800" />
+          <div className="relative grid h-12 w-12 place-items-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-300/70">
+            <FileText className="h-6 w-6 text-teal-300" />
+            <Camera className="absolute -bottom-1 -right-2 h-5 w-5 rounded-md bg-blue-600 p-1 text-white" />
           </div>
-          <UserRound className="absolute bottom-1 left-2 z-20 h-16 w-16 text-white/25" strokeWidth={1.4} />
-          <motion.div
-            className="absolute bottom-8 right-0 z-20 h-16 w-9 -rotate-[18deg] rounded-lg border-2 border-slate-800 bg-slate-950 p-1 shadow-xl"
-            animate={shouldReduceMotion ? { rotate: -18 } : { rotate: [-18, -12, -18], y: [0, -2, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <div className="flex h-full flex-col items-center rounded-md bg-gradient-to-br from-slate-700 to-slate-950 pt-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-              <span className="mt-2 h-0.5 w-4 rounded-full bg-white/80" />
-              <span className="mt-1 h-0.5 w-3 rounded-full bg-white/50" />
-              <span className="mt-2 h-4 w-4 rounded border border-teal-300/80" />
-            </div>
-          </motion.div>
-          <span className="absolute bottom-1 left-2 z-30 rounded-full bg-white/90 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-blue-700">
-            photo
-          </span>
+          <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-600">Photo</span>
         </motion.div>
 
-        <div className="relative flex w-[17%] items-center justify-center">
-          <motion.div
-            className="z-10 grid h-10 w-10 place-items-center rounded-full bg-white text-blue-600 shadow-lg shadow-blue-200/70"
-            animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.16, 1] }}
-            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Zap className="h-5 w-5 fill-current" />
-          </motion.div>
-          {!shouldReduceMotion && (
-            <motion.span
-              className="absolute left-0 right-0 top-1/2 h-0.5 origin-left rounded-full bg-gradient-to-r from-blue-300 to-teal-300"
-              animate={{ scaleX: [0.35, 1, 0.35], opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          )}
-        </div>
+        {[0, 1, 2].map((index) => (
+          <motion.span
+            key={index}
+            className="h-0.5 w-[7%] rounded-full bg-gradient-to-r from-blue-300 to-teal-300"
+            animate={shouldReduceMotion ? { opacity: 0.7 } : { opacity: [0.25, 1, 0.25] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: index * 0.35, ease: 'easeInOut' }}
+          />
+        ))}
 
-        <AnimatePresence mode="wait">
+        <motion.div
+          className="flex w-[22%] flex-col items-center gap-2"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.45, delay: 0.15 }}
+        >
           <motion.div
-            key={documentType}
-            className="relative w-[45%] rounded-2xl border-2 border-teal-100 bg-white p-3 shadow-xl shadow-teal-100/70"
-            initial={{ opacity: 0, x: 18, rotate: 5, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, rotate: 4, scale: 1 }}
-            exit={{ opacity: 0, x: -8, rotate: 0 }}
-            transition={{ duration: 0.35 }}
+            className="grid h-12 w-12 place-items-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-300/70"
+            animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.12, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <div className="flex items-center justify-between">
-              <ReceiptText className="h-5 w-5 text-teal-600" strokeWidth={2.2} />
-              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-bold text-emerald-700">PRÊT</span>
-            </div>
-            <div className="mt-3 h-2 w-4/5 rounded-full bg-slate-300" />
-            <div className="mt-2 h-2 w-3/5 rounded-full bg-slate-200" />
-            <div className="mt-3 rounded-lg bg-gradient-to-r from-blue-100 to-teal-100 px-2 py-1.5 text-[10px] font-extrabold text-slate-800">
-              {documentType} généré
-            </div>
-            <div className="mt-3 flex items-center justify-between">
-              <FileText className="h-4 w-4 text-blue-500" />
-              <Send className="h-4 w-4 text-teal-600" />
-            </div>
+            <Sparkles className="h-6 w-6" />
           </motion.div>
-        </AnimatePresence>
+          <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-700">IA</span>
+        </motion.div>
+
+        <motion.div
+          className="flex w-[26%] flex-col items-center gap-2"
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.45, delay: 0.3 }}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={documentType}
+              className="w-full rounded-xl border-2 border-teal-100 bg-white p-2 shadow-lg shadow-teal-100/70"
+              initial={{ opacity: 0, y: 6, rotate: 3 }}
+              animate={{ opacity: 1, y: 0, rotate: 3 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center justify-between">
+                <ReceiptText className="h-4 w-4 text-teal-600" />
+                <span className="text-[8px] font-black text-emerald-600">PRÊT</span>
+              </div>
+              <div className="mt-2 h-1.5 w-4/5 rounded-full bg-slate-300" />
+              <div className="mt-1.5 h-1.5 w-3/5 rounded-full bg-slate-200" />
+              <div className="mt-2 rounded bg-teal-50 px-1 py-1 text-center text-[8px] font-black text-slate-700">
+                {documentType}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+          <span className="text-[9px] font-extrabold uppercase tracking-wider text-teal-700">Prêt</span>
+        </motion.div>
+
+        <motion.div
+          className="flex w-[18%] flex-col items-center gap-2"
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.45, delay: 0.45 }}
+        >
+          <div className="grid h-11 w-11 place-items-center rounded-full bg-teal-600 text-white shadow-lg shadow-teal-200/80">
+            <Send className="h-5 w-5" />
+          </div>
+          <div className="flex gap-1 text-teal-700">
+            <Download className="h-3.5 w-3.5" />
+            <Send className="h-3.5 w-3.5" />
+          </div>
+        </motion.div>
       </div>
 
       {[{ left: '9%', top: '15%' }, { left: '82%', top: '54%' }, { left: '26%', top: '83%' }].map((dot, index) => (
