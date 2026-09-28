@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Camera, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -31,7 +31,7 @@ function ProductIllustration() {
   return (
     <div className="relative mx-auto h-52 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 p-4 shadow-inner sm:h-56 lg:h-64 lg:p-5">
       <div className="relative z-10 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
-        <span>Photo → IA → document</span>
+        <span>Photo → document</span>
         <span className="rounded-full bg-white/80 px-2 py-1 text-blue-600 shadow-sm">en quelques secondes</span>
       </div>
       <motion.div
@@ -47,7 +47,7 @@ function ProductIllustration() {
 
       <div className="absolute inset-x-5 bottom-5 top-14 flex items-center justify-between gap-2">
         <motion.div
-          className="relative w-[31%] rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-200/70"
+          className="relative w-[42%] rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-200/70"
           initial={{ opacity: 0, x: -14 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
@@ -65,28 +65,10 @@ function ProductIllustration() {
           <p className="mt-2 text-center text-[11px] font-bold text-slate-700">Prenez une photo</p>
         </motion.div>
 
-        <div className="flex w-[16%] flex-col items-center gap-2">
-          <motion.div
-            className="grid h-9 w-9 place-items-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-200"
-            animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.12, 1] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Sparkles className="h-4 w-4" />
-          </motion.div>
-          <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600">IA</span>
-          {!shouldReduceMotion && (
-            <motion.div
-              className="absolute h-1 w-12 rounded-full bg-gradient-to-r from-blue-300 to-teal-300"
-              animate={{ opacity: [0.25, 1, 0.25], scaleX: [0.6, 1, 0.6] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          )}
-        </div>
-
         <AnimatePresence mode="wait">
           <motion.div
             key={documentType}
-            className="w-[43%] rounded-2xl border border-teal-100 bg-white p-3 shadow-xl shadow-teal-100/70"
+            className="w-[50%] rounded-2xl border border-teal-100 bg-white p-3 shadow-xl shadow-teal-100/70"
             initial={{ opacity: 0, x: 14, rotate: 4 }}
             animate={{ opacity: 1, x: 0, rotate: 4 }}
             exit={{ opacity: 0, x: -8, rotate: 0 }}

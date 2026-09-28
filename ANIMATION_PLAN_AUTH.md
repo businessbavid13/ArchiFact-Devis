@@ -12,12 +12,11 @@ L’animation métier est affichée sur desktop et sur mobile. Le panneau deskto
 
 1. **Entrée de la carte** : fondu + déplacement vertical de 20 px, durée 600 ms, courbe `easeOut`.
 2. **Photo** : une carte sombre avec une icône caméra et une ligne de scan rappelle la prise de photo d’un besoin, article ou document.
-3. **Analyse IA** : une étape centrale met en évidence le passage par l’IA avec un badge pulsant.
-4. **Génération** : la carte de sortie affiche alternativement « Devis généré » et « Facture générée », puis un pictogramme d’envoi rappelle le partage au client.
-5. **Ambiance** : deux halos bleus/teal restent discrets et trois points de couleur ont une pulsation décalée.
-6. **Saisie e-mail** : le champ passe de gris à bleu, avec anneau de focus accessible.
-7. **Flèche d’envoi** : invisible tant que le champ est vide ; apparition par fondu, translation horizontale et légère mise à l’échelle dès qu’un caractère est saisi. Elle reste désactivée jusqu’à la validation du format e-mail.
-8. **Chargement** : la flèche devient un spinner sans modifier la hauteur du champ.
+3. **Génération** : la carte de sortie affiche alternativement « Devis généré » et « Facture générée », puis un pictogramme d’envoi rappelle le partage au client.
+4. **Ambiance** : deux halos bleus/teal restent discrets et trois points de couleur ont une pulsation décalée.
+5. **Saisie e-mail** : le champ passe de gris à bleu, avec anneau de focus accessible.
+6. **Flèche d’envoi** : invisible tant que le champ est vide ; apparition par fondu, translation horizontale et légère mise à l’échelle dès qu’un caractère est saisi. Elle reste désactivée jusqu’à la validation du format e-mail.
+7. **Chargement** : la flèche devient un spinner sans modifier la hauteur du champ.
 
 ## Séquence OTP
 
