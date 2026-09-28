@@ -263,7 +263,12 @@ app.post('/auth/hooks/send-email', authHookRateLimiter, async (req: Request, res
 
 app.post('/webhooks/geniuspay', webhookRateLimiter, async (req: Request, res: Response) => {
   const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : JSON.stringify(req.body || {});
-  if (!verifyGeniusPaySignature(rawBody, req.header('x-geniuspay-signature'))) {
+  const webhookEvent = req.header('x-webhook-event') || '';
+  if (!verifyGeniusPaySignature(
+    rawBody,
+    req.header('x-webhook-signature'),
+    req.header('x-webhook-timestamp'),
+  )) {
     void writeSecurityAudit({ req, eventType: 'payment.webhook_rejected', success: false });
     res.status(401).json({ error: 'Invalid webhook signature' });
     return;
@@ -272,18 +277,31 @@ app.post('/webhooks/geniuspay', webhookRateLimiter, async (req: Request, res: Re
   try {
     if (!adminSupabase) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
     const payload = JSON.parse(rawBody) as {
+      event?: string;
       status?: string;
       reference?: string;
       transaction_id?: string;
-      data?: { status?: string; reference?: string; transaction_id?: string };
+      metadata?: { order_id?: string };
+      data?: {
+        status?: string;
+        reference?: string;
+        transaction_id?: string;
+        metadata?: { order_id?: string };
+      };
     };
     const event = payload.data || payload;
-    const providerReference = event.reference || event.transaction_id;
+    const providerReference = event.reference || event.transaction_id || event.metadata?.order_id;
     if (!providerReference) {
       res.status(400).json({ error: 'Missing payment reference' });
       return;
     }
-    if (String(event.status || '').toLowerCase() !== 'success') {
+    const eventName = webhookEvent || payload.event || '';
+    const status = String(event.status || '').toLowerCase();
+    if (eventName && eventName !== 'payment.success' && status !== 'completed') {
+      res.status(200).json({ received: true, ignored: true });
+      return;
+    }
+    if (status && !['success', 'completed', 'paid'].includes(status) && eventName !== 'payment.success') {
       res.status(200).json({ received: true, ignored: true });
       return;
     }
@@ -384,13 +402,16 @@ app.post('/api/payments/geniuspay/create', requireAuth, paymentRateLimiter, asyn
       res.status(400).json({ error: 'Unknown plan' });
       return;
     }
-    const providerUrl = process.env.GENIUSPAY_API_URL;
-    const providerKey = process.env.GENIUSPAY_API_KEY;
-    if (!providerUrl || !providerKey) {
+    const providerUrl = process.env.GENIUSPAY_API_URL || 'https://geniuspay.ci/api/v1/merchant/payments';
+    const providerApiKey = process.env.GENIUSPAY_API_KEY;
+    const providerApiSecret = process.env.GENIUSPAY_API_SECRET;
+    if (!providerApiKey || !providerApiSecret) {
       res.status(503).json({ error: 'GeniusPay is not configured on the backend' });
       return;
     }
     const reference = `ARCHI_${crypto.randomUUID()}`;
+    const providerPaymentMethod = paymentMethod === 'mtn_momo' ? 'mtn_money' : paymentMethod;
+    const appUrl = process.env.APP_URL || process.env.VITE_AUTH_REDIRECT_URL;
     const { error: insertError } = await adminSupabase.from('payment_transactions').insert({
       user_id: getAuthenticatedUser(req).id,
       plan_id: plan.id,
@@ -402,14 +423,26 @@ app.post('/api/payments/geniuspay/create', requireAuth, paymentRateLimiter, asyn
     if (insertError) throw insertError;
     const providerResponse = await fetch(providerUrl, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${providerKey}` },
+      headers: {
+        'content-type': 'application/json',
+        'X-API-Key': providerApiKey,
+        'X-API-Secret': providerApiSecret,
+      },
       body: JSON.stringify({
         amount: plan.price_fcfa,
         currency: 'XOF',
-        reference,
-        payment_method: paymentMethod,
-        customer_phone: phoneNumber,
-        callback_url: `${process.env.APP_URL || ''}/webhooks/geniuspay`,
+        payment_method: providerPaymentMethod,
+        description: `Crédits IA ArchiFact — ${plan.name}`,
+        customer: {
+          phone: phoneNumber,
+        },
+        success_url: appUrl ? `${appUrl}/settings?payment=success&reference=${encodeURIComponent(reference)}` : undefined,
+        error_url: appUrl ? `${appUrl}/settings?payment=failed&reference=${encodeURIComponent(reference)}` : undefined,
+        metadata: {
+          order_id: reference,
+          plan_id: plan.id,
+          user_id: getAuthenticatedUser(req).id,
+        },
       }),
     });
     if (!providerResponse.ok) {
@@ -417,8 +450,25 @@ app.post('/api/payments/geniuspay/create', requireAuth, paymentRateLimiter, asyn
       res.status(502).json({ error: 'GeniusPay payment initialization failed' });
       return;
     }
+    const providerPayload = await providerResponse.json() as {
+      success?: boolean;
+      data?: { reference?: string; payment_url?: string; checkout_url?: string };
+    };
+    const providerReference = providerPayload.data?.reference || reference;
+    if (providerReference !== reference) {
+      const { error: updateError } = await adminSupabase
+        .from('payment_transactions')
+        .update({ provider_reference: providerReference })
+        .eq('provider_reference', reference);
+      if (updateError) throw updateError;
+    }
     void writeSecurityAudit({ req, eventType: 'payment.initialized', metadata: { provider: 'geniuspay', plan_id: plan.id } });
-    res.status(201).json({ reference, plan, provider: await providerResponse.json() });
+    res.status(201).json({
+      reference: providerReference,
+      plan,
+      checkoutUrl: providerPayload.data?.checkout_url || providerPayload.data?.payment_url || null,
+      provider: providerPayload,
+    });
   } catch (error) {
     console.error('Error creating GeniusPay payment:', error instanceof Error ? error.message : 'unknown error');
     void writeSecurityAudit({ req, eventType: 'payment.create_failed', success: false });

@@ -25,7 +25,7 @@ Le portefeuille de crédits est piloté par le backend Express et Supabase. Le f
 
 Appliquer `supabase/migrations/202609270001_credit_wallet.sql` avant de démarrer le backend. Cette migration crée les plans, coûts d'opérations, ledger, réservations atomiques, trigger d'initialisation et fonctions RPC protégées.
 
-Le backend exige `SUPABASE_URL`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY`. GeniusPay reste désactivé tant que `GENIUSPAY_API_URL`, `GENIUSPAY_API_KEY` et `GENIUSPAY_WEBHOOK_SECRET` ne sont pas configurés ; les crédits ne sont ajoutés que par le webhook signé et idempotent.
+Le backend exige `SUPABASE_URL`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY`. GeniusPay utilise l’API marchand `https://geniuspay.ci/api/v1/merchant/payments` avec `GENIUSPAY_API_KEY`, `GENIUSPAY_API_SECRET` et `GENIUSPAY_WEBHOOK_SECRET`. Les crédits ne sont ajoutés que par le webhook signé, horodaté et idempotent.
 
 ## Authentification OTP et Google
 

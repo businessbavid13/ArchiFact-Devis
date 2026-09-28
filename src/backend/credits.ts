@@ -109,12 +109,20 @@ export async function refundReservation(userId: string, reservationId: string) {
   return data;
 }
 
-export function verifyGeniusPaySignature(rawBody: string, signature: string | undefined): boolean {
+export function verifyGeniusPaySignature(
+  rawBody: string,
+  signature: string | undefined,
+  timestamp: string | undefined,
+): boolean {
   const secret = process.env.GENIUSPAY_WEBHOOK_SECRET;
-  if (!secret || !signature) return false;
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+  if (!secret || !signature || !timestamp || !/^\d+$/.test(timestamp)) return false;
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isSafeInteger(timestampSeconds) || Math.abs(Date.now() / 1000 - timestampSeconds) > 300) {
+    return false;
+  }
+  const expected = crypto.createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex');
   const expectedBuffer = Buffer.from(expected);
-  const providedBuffer = Buffer.from(signature);
+  const providedBuffer = Buffer.from(signature.replace(/^sha256=/i, ''));
   return expectedBuffer.length === providedBuffer.length &&
     crypto.timingSafeEqual(expectedBuffer, providedBuffer);
 }
