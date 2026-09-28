@@ -8,8 +8,14 @@ export function ArticlesPage() {
   return (
     <ArticlesScreen
       articles={ctx.articles}
-      onAddArticle={ctx.addArticle}
-      onUpdateArticle={ctx.updateArticle}
+      onAddArticle={(article) => {
+        ctx.addArticle(article);
+        ctx.notify('Article enregistré');
+      }}
+      onUpdateArticle={(article) => {
+        ctx.updateArticle(article);
+        ctx.notify('Article mis à jour');
+      }}
       onDeleteArticle={ctx.deleteArticle}
       onRestoreArticle={ctx.addArticle}
       onScanArticlePhoto={() => ctx.openPhotoScan('article')}

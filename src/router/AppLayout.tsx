@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import { MobileStatusBar } from '../components/StatusBar/MobileStatusBar';
 import { AppHeader } from '../components/Header/AppHeader';
 import { BottomTabBar, TabType } from '../components/BottomTabs/BottomTabBar';
@@ -188,6 +189,11 @@ function AppLayoutInner() {
           isLoading={ctx.creditsLoading}
           loadError={ctx.creditsError}
           onCreatePayment={ctx.createPayment}
+          onRefreshCredits={ctx.refreshCredits}
+          transactions={ctx.creditTransactions}
+          transactionsLoading={ctx.creditTransactionsLoading}
+          transactionsError={ctx.creditTransactionsError}
+          onLoadTransactions={ctx.loadCreditTransactions}
         />
         )}
 
@@ -200,6 +206,15 @@ function AppLayoutInner() {
           />
         )}
         </Suspense>
+
+        <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex justify-center px-4 lg:bottom-8">
+          {ctx.toastMessage && (
+            <div role="status" className="flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+              {ctx.toastMessage}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

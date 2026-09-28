@@ -20,6 +20,7 @@ export function InvoicesPage() {
     const client = ctx.clients.find((c) => c.id === inv.clientId);
     const { downloadDocumentExcel } = await import('../../utils/excelGenerator');
     await downloadDocumentExcel(createInvoiceDocumentData(inv, client, ctx.settings));
+    ctx.notify('Excel téléchargé');
   };
 
   return (

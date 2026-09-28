@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { X, Sparkles, Check, CreditCard, Smartphone, CheckCircle, ShieldCheck, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { X, Sparkles, Check, CreditCard, Smartphone, CheckCircle, ShieldCheck, ArrowRight, Loader2, AlertCircle, RefreshCw, History } from 'lucide-react';
 import { Button } from '../Button/Button';
 import { CreditPlan } from '../../types';
 import { formatCurrency } from '../../utils/formatting';
 import { DialogPanel } from '../Dialog/DialogPanel';
+import { AnimatedNumber } from '../AnimatedNumber/AnimatedNumber';
+import type { CreditTransaction } from '../../hooks/useCredits';
+
+const TRANSACTION_LABELS: Record<CreditTransaction['type'], string> = {
+  PURCHASE: 'Achat de crédits',
+  AI_USAGE: 'Utilisation IA',
+  BONUS: 'Bonus',
+  REFUND: 'Remboursement',
+  ADJUSTMENT: 'Ajustement',
+};
 
 interface CreditsModalProps {
   isOpen: boolean;
@@ -13,6 +23,11 @@ interface CreditsModalProps {
   isLoading: boolean;
   loadError: string | null;
   onCreatePayment: (planId: string, paymentMethod: string, phoneNumber: string) => Promise<{ reference: string }>;
+  onRefreshCredits: () => Promise<void>;
+  transactions: CreditTransaction[];
+  transactionsLoading: boolean;
+  transactionsError: string | null;
+  onLoadTransactions: () => Promise<void>;
 }
 
 export const CreditsModal: React.FC<CreditsModalProps> = ({
@@ -23,6 +38,11 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
   isLoading,
   loadError,
   onCreatePayment,
+  onRefreshCredits,
+  transactions,
+  transactionsLoading,
+  transactionsError,
+  onLoadTransactions,
 }) => {
   const [selectedPlan, setSelectedPlan] = useState<CreditPlan | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'wave' | 'orange_money' | 'mtn_momo' | 'card'>('wave');
@@ -30,12 +50,26 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [successResult, setSuccessResult] = useState<{ credits: number; tx: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!selectedPlan && plans.length > 0) setSelectedPlan(plans[0]);
   }, [plans, selectedPlan]);
 
+  useEffect(() => {
+    if (isOpen) void onLoadTransactions();
+  }, [isOpen, onLoadTransactions]);
+
   if (!isOpen) return null;
+
+  const handleRefreshBalance = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([onRefreshCredits(), onLoadTransactions()]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleConfirmPurchase = async () => {
     setIsProcessing(true);
@@ -98,6 +132,24 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                 <div className="mt-3 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-md text-xs font-normal leading-relaxed">
                   Les crédits seront ajoutés après confirmation sécurisée du webhook GeniusPay.
                 </div>
+                <div className="mt-3 flex items-center justify-between rounded-md bg-slate-900 p-3 text-white">
+                  <div className="text-left">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Solde</span>
+                    <div className="flex items-baseline gap-1.5" aria-live="polite">
+                      <AnimatedNumber value={currentCredits} className="text-xl font-bold font-mono" />
+                      <span className="text-xs text-slate-300">crédits</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRefreshBalance}
+                    disabled={isRefreshing}
+                    className="flex min-h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold text-white hover:bg-white/10 disabled:opacity-60"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
+                    Actualiser
+                  </button>
+                </div>
               </div>
               <Button
                 variant="primary"
@@ -117,7 +169,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                     Solde actuel
                   </span>
                   <div className="flex items-baseline gap-1.5 mt-0.5">
-                    <span className="text-2xl font-bold font-mono tracking-tight text-white">{currentCredits}</span>
+                    <AnimatedNumber value={currentCredits} className="text-2xl font-bold font-mono tracking-tight text-white" />
                     <span className="text-xs font-medium text-slate-300">crédits</span>
                   </div>
                 </div>
@@ -274,6 +326,45 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                 <ShieldCheck className="w-4 h-4 text-slate-700 flex-shrink-0" />
                 <span>Paiement sécurisé et instantané • Aucun engagement</span>
               </div>
+
+              <section aria-labelledby="credit-history-title" className="space-y-2 pt-2">
+                <h4 id="credit-history-title" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-tight text-slate-900">
+                  <History className="h-3.5 w-3.5" aria-hidden="true" />
+                  Historique
+                </h4>
+                {transactionsLoading ? (
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    Chargement de l'historique...
+                  </div>
+                ) : transactionsError ? (
+                  <div role="alert" className="flex items-center justify-between gap-2 rounded-md border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
+                    <span>{transactionsError}</span>
+                    <button type="button" onClick={() => void onLoadTransactions()} className="font-semibold underline">
+                      Réessayer
+                    </button>
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <p className="text-xs text-slate-500">Aucune transaction pour le moment.</p>
+                ) : (
+                  <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
+                    {transactions.map((transaction) => (
+                      <li key={transaction.id} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-slate-900">{TRANSACTION_LABELS[transaction.type]}</p>
+                          <p className="text-[11px] text-slate-500">
+                            {new Date(transaction.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            {transaction.status === 'RESERVED' ? ' • En cours' : transaction.status === 'REFUNDED' ? ' • Remboursé' : ''}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 font-mono font-semibold ${transaction.amount >= 0 ? 'text-emerald-600' : 'text-slate-700'}`}>
+                          {transaction.amount > 0 ? `+${transaction.amount}` : transaction.amount}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
             </>
           )}
         </div>

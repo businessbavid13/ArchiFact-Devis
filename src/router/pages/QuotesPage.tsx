@@ -20,6 +20,7 @@ export function QuotesPage() {
     const client = ctx.clients.find((c) => c.id === quo.clientId);
     const { downloadDocumentExcel } = await import('../../utils/excelGenerator');
     await downloadDocumentExcel(createQuoteDocumentData(quo, client, ctx.settings));
+    ctx.notify('Excel téléchargé');
   };
 
   const handleConvertToInvoice = (quote: Quote) => {

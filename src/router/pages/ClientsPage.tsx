@@ -8,8 +8,14 @@ export function ClientsPage() {
   return (
     <ClientsScreen
       clients={ctx.clients}
-      onAddClient={ctx.addClient}
-      onUpdateClient={ctx.updateClient}
+      onAddClient={(client) => {
+        ctx.addClient(client);
+        ctx.notify('Client enregistré');
+      }}
+      onUpdateClient={(client) => {
+        ctx.updateClient(client);
+        ctx.notify('Client mis à jour');
+      }}
       onDeleteClient={ctx.deleteClient}
       onRestoreClient={ctx.addClient}
     />

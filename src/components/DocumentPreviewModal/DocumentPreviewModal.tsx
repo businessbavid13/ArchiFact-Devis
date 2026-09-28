@@ -91,7 +91,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
   const [isSharingNative, setIsSharingNative] = useState(false);
-  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showHeaderFooterCustomizer, setShowHeaderFooterCustomizer] = useState(false);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
@@ -172,8 +172,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
       setIsGeneratingPdf(true);
       await new Promise((r) => setTimeout(r, 80));
       await downloadDocumentPdf(pdfData);
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3500);
+      setDownloadSuccess('PDF téléchargé avec succès !');
+      setTimeout(() => setDownloadSuccess(null), 3500);
     } catch (err) {
       console.error('Error generating PDF:', err);
     } finally {
@@ -185,6 +185,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     try {
       setIsGeneratingExcel(true);
       await downloadDocumentExcel(pdfData);
+      setDownloadSuccess('Excel téléchargé avec succès !');
+      setTimeout(() => setDownloadSuccess(null), 3500);
     } catch (err) {
       console.error('Error generating Excel:', err);
     } finally {
@@ -337,9 +339,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           
           {/* Notification Banner for PDF Download */}
           {downloadSuccess && (
-            <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div role="status" className="absolute top-14 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
               <CheckCircle2 className="w-4 h-4 text-white" />
-              <span>PDF téléchargé avec succès !</span>
+              <span>{downloadSuccess}</span>
             </div>
           )}
 
