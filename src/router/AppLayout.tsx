@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MobileStatusBar } from '../components/StatusBar/MobileStatusBar';
 import { AppHeader } from '../components/Header/AppHeader';
 import { BottomTabBar, TabType } from '../components/BottomTabs/BottomTabBar';
+import { SidebarNav } from '../components/Sidebar/SidebarNav';
 import { PhotoScanModal } from '../components/PhotoScanModal/PhotoScanModal';
 import { CreditsModal } from '../components/CreditsModal/CreditsModal';
 import { DocumentPreviewModal } from '../components/DocumentPreviewModal/DocumentPreviewModal';
@@ -118,20 +119,31 @@ function AppLayoutInner() {
 
   return (
     <div className="min-h-[100dvh] bg-slate-900 flex items-center justify-center p-0 sm:p-4 select-none font-sans text-slate-800">
-      <div className="w-full min-h-[100dvh] bg-white shadow-2xl overflow-hidden flex flex-col relative sm:max-w-[560px] sm:min-h-0 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:max-w-[1400px] lg:h-[calc(100dvh-2rem)] lg:rounded-[28px]">
+      <div className="w-full min-h-[100dvh] bg-white shadow-2xl overflow-hidden flex flex-col relative sm:max-w-[560px] sm:min-h-0 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:max-w-none lg:h-[calc(100dvh-2rem)] lg:rounded-none lg:overflow-visible">
         <MobileStatusBar />
 
-        <AppHeader
-          {...headerProps}
-          credits={ctx.credits}
-          onCreditsClick={() => ctx.setIsCreditsModalOpen(true)}
-        />
+        <div className="flex min-h-0 flex-1">
+          <SidebarNav
+            activeTab={activeTab}
+            isHome={location.pathname === '/'}
+            onNavigate={navigate}
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <AppHeader
+              {...headerProps}
+              credits={ctx.credits}
+              onCreditsClick={() => ctx.setIsCreditsModalOpen(true)}
+            />
 
-        <main className="flex-1 flex flex-col overflow-hidden relative">
-          <Outlet />
-        </main>
+            <main className="flex-1 flex flex-col overflow-hidden relative">
+              <Outlet />
+            </main>
 
-        <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
+            <div className="lg:hidden">
+              <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+          </div>
+        </div>
 
         {/* Global Modals */}
         <PhotoScanModal
