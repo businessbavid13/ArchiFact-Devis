@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import crypto from 'node:crypto';
 import cors from 'cors';
 import helmet from 'helmet';
+import { Webhook } from 'standardwebhooks';
 // Correct import based on what we found in the exports
 import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
@@ -25,7 +26,12 @@ const port = process.env.PORT || 5000;
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000' }));
 app.use('/webhooks/geniuspay', express.raw({ type: 'application/json' }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, _res, buffer) => {
+    (req as Request & { rawBody?: string }).rawBody = buffer.toString('utf8');
+  },
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Initialize Gemini AI
@@ -33,6 +39,7 @@ const apiKey = process.env.GEMINI_API_KEY;
 const genai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 type AuthenticatedRequest = Request & { user: AuthenticatedUser };
+type RawBodyRequest = Request & { rawBody?: string };
 type AuthEmailHookPayload = {
   user?: { email?: string; created_at?: string };
   email_data?: {
@@ -55,8 +62,8 @@ async function sendAuthEmail(to: string, token: string, actionType: string): Pro
   if (!apiKey || !from) throw new Error('Resend auth email is not configured');
 
   const isSignup = actionType === 'signup';
-  const subject = isSignup ? 'Bienvenue sur ArchiFact — votre code de connexion' : 'Votre code de connexion ArchiFact';
-  const title = isSignup ? 'Bienvenue sur ArchiFact' : 'Votre code de connexion';
+  const subject = isSignup ? 'Bienvenue sur ArchiFact — votre code de connexion' : 'Votre code OTP ArchiFact';
+  const title = isSignup ? 'Bienvenue sur ArchiFact' : 'Code OTP de connexion';
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -65,14 +72,17 @@ async function sendAuthEmail(to: string, token: string, actionType: string): Pro
       to: [to],
       subject,
       html: `
-        <div style="background:#fafaf8;padding:40px 20px;font-family:Arial,sans-serif;color:#171717">
-          <div style="max-width:520px;margin:auto;background:#fff;border:1px solid #e6e6e1;border-radius:20px;padding:36px">
-            <div style="color:#d97757;font-size:20px;font-weight:700">✦ ArchiFact</div>
-            <h1 style="font-size:28px;margin:28px 0 12px">${title}</h1>
-            <p style="font-size:16px;line-height:1.6">Utilisez le code ci-dessous pour continuer :</p>
-            <div style="background:#171717;color:#fff;border-radius:12px;font-size:32px;letter-spacing:10px;text-align:center;padding:18px 12px;margin:24px 0">${token}</div>
-            <p style="color:#666;font-size:14px;line-height:1.6">Ce code expire selon la configuration de votre projet Supabase. Ne le partagez avec personne.</p>
-            <p style="color:#999;font-size:12px;margin-top:32px">ArchiFact — Devis et factures professionnels</p>
+        <div style="background:#f4f8ff;padding:40px 20px;font-family:Arial,sans-serif;color:#0b1f3b">
+          <div style="max-width:520px;margin:auto;background:#fff;border:1px solid #dbeafe;border-radius:20px;overflow:hidden">
+            <div style="background:linear-gradient(135deg,#007bff,#00d1ff);padding:28px 36px;color:#fff;font-size:24px;font-weight:700">ArchiFact</div>
+            <div style="padding:36px">
+              <h1 style="font-size:26px;margin:0 0 14px">${title}</h1>
+              <p style="font-size:16px;line-height:1.6;color:#64748b">Utilisez ce code pour finaliser votre connexion à ArchiFact :</p>
+              <div style="background:#0b1f3b;color:#fff;border-radius:14px;font-size:34px;letter-spacing:10px;text-align:center;padding:18px 12px;margin:26px 0;font-weight:700">${token}</div>
+              <p style="color:#64748b;font-size:14px;line-height:1.6">Ce code expire dans 10 minutes et n’est valable qu’une seule fois.</p>
+              <p style="color:#94a3b8;font-size:13px;line-height:1.6">Si vous n’êtes pas à l’origine de cette tentative, ignorez ce message.</p>
+              <p style="color:#94a3b8;font-size:12px;margin:30px 0 0">ArchiFact — Devis &amp; factures professionnels</p>
+            </div>
           </div>
         </div>
       `,
@@ -114,13 +124,31 @@ async function reserveForRequest(
 }
 
 app.post('/auth/hooks/send-email', async (req: Request, res: Response) => {
-  const authorization = req.header('authorization')?.replace(/^Bearer\s+/i, '');
-  if (!constantTimeSecretMatch(authorization, process.env.AUTH_HOOK_SECRET)) {
-    res.status(401).json({ error: 'Invalid auth hook secret' });
+  const rawBody = (req as RawBodyRequest).rawBody || JSON.stringify(req.body || {});
+  const hookSecret = process.env.AUTH_HOOK_SECRET;
+  let payload: AuthEmailHookPayload;
+
+  try {
+    const webhookHeaders = {
+      'webhook-id': req.header('webhook-id') || '',
+      'webhook-timestamp': req.header('webhook-timestamp') || '',
+      'webhook-signature': req.header('webhook-signature') || '',
+    };
+    if (hookSecret && webhookHeaders['webhook-id'] && webhookHeaders['webhook-timestamp'] && webhookHeaders['webhook-signature']) {
+      payload = new Webhook(hookSecret).verify(rawBody, webhookHeaders) as AuthEmailHookPayload;
+    } else {
+      const authorization = req.header('authorization')?.replace(/^Bearer\s+/i, '');
+      if (!constantTimeSecretMatch(authorization, hookSecret)) {
+        res.status(401).json({ error: 'Invalid auth hook signature' });
+        return;
+      }
+      payload = req.body as AuthEmailHookPayload;
+    }
+  } catch {
+    res.status(401).json({ error: 'Invalid auth hook signature' });
     return;
   }
 
-  const payload = req.body as AuthEmailHookPayload;
   const email = payload.user?.email;
   const token = payload.email_data?.token;
   const actionType = payload.email_data?.email_action_type || 'magic_link';
