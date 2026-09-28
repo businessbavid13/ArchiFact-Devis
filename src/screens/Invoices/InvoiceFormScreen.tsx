@@ -192,6 +192,13 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
   return (
     <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden relative">
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-28">
+        <nav aria-label="Fil d’Ariane" className="flex items-center gap-2 text-xs text-slate-500">
+          <span>Accueil</span>
+          <span aria-hidden="true">/</span>
+          <span>Factures</span>
+          <span aria-hidden="true">/</span>
+          <strong className="font-semibold text-slate-900">{initialInvoice ? 'Modifier' : 'Nouveau'}</strong>
+        </nav>
         {/* Document Number Banner */}
         <div className="bg-white rounded-lg border border-slate-200 p-3.5  flex items-center justify-between">
           <div>

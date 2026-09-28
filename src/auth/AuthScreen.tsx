@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Camera, Check, Download, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, FileText, Loader2, Mail } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -78,8 +78,17 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const hasTypedEmail = email.trim().length > 0;
   const isValidEmail = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()), [email]);
+
+  useEffect(() => {
+    if (resendCooldown === 0) return;
+    const timer = window.setInterval(() => {
+      setResendCooldown((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendCooldown]);
 
   const handleSendCode = async (event?: React.FormEvent | React.MouseEvent) => {
     event?.preventDefault();
@@ -99,6 +108,7 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
     }
     setEmail(normalizedEmail);
     setStep('code');
+    setResendCooldown(30);
   };
 
   const handleVerifyCode = async (event: React.FormEvent) => {
@@ -277,10 +287,10 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
                     <button
                       type="button"
                       onClick={handleSendCode}
-                      disabled={isLoading}
+                      disabled={isLoading || resendCooldown > 0}
                       className="mt-5 w-full text-center text-sm font-semibold text-blue-600 underline-offset-4 hover:underline"
                     >
-                      Renvoyer le code
+                      {resendCooldown > 0 ? `Renvoyer le code dans ${resendCooldown}s` : 'Renvoyer le code'}
                     </button>
                   </motion.form>
                 )}
