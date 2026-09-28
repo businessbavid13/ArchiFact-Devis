@@ -9,6 +9,7 @@ interface ArticlesScreenProps {
   onAddArticle: (article: Article) => void;
   onUpdateArticle: (article: Article) => void;
   onDeleteArticle: (id: string) => void;
+  onRestoreArticle: (article: Article) => void;
   onScanArticlePhoto: () => void;
 }
 
@@ -17,11 +18,19 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
   onAddArticle,
   onUpdateArticle,
   onDeleteArticle,
+  onRestoreArticle,
   onScanArticlePhoto,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [undoArticle, setUndoArticle] = useState<Article | null>(null);
+
+  const handleDeleteArticle = (article: Article) => {
+    onDeleteArticle(article.id);
+    setUndoArticle(article);
+    window.setTimeout(() => setUndoArticle((current) => current?.id === article.id ? null : current), 5000);
+  };
 
   // Form fields matching screenshot 10
   const [name, setName] = useState('');
@@ -133,12 +142,11 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`Supprimer ${art.name} ?`)) {
-                      onDeleteArticle(art.id);
-                    }
+                    handleDeleteArticle(art);
                   }}
                   className="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
                   title="Supprimer"
+                  aria-label={`Supprimer ${art.name}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -147,6 +155,22 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
           ))
         )}
       </div>
+
+      {undoArticle && (
+        <div role="status" className="fixed bottom-20 left-4 right-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg bg-slate-900 px-4 py-3 text-white shadow-xl">
+          <span className="text-xs">Article supprimé</span>
+          <button
+            type="button"
+            onClick={() => {
+              onRestoreArticle(undoArticle);
+              setUndoArticle(null);
+            }}
+            className="min-h-9 rounded-md px-3 text-xs font-bold text-blue-200 hover:bg-white/10"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
 
       {/* Floating Action Button (Matching screenshot 4: + Nouvel Article/Service) */}
       <div className="fixed bottom-20 right-5 z-20 flex flex-col items-end gap-2">
