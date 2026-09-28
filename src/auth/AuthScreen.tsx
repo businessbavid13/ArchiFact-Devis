@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Camera, Download, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Check, Download, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -42,18 +42,31 @@ function ProductIllustration() {
 
   return (
     <motion.div
-      className="relative mx-auto h-[290px] w-full max-w-[390px] overflow-hidden sm:h-56 lg:h-64"
+      className="relative mx-auto flex h-36 w-full max-w-[390px] items-center justify-center"
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
     >
-      <motion.img
-        src="/branding/onboarding-documents.webp"
-        alt="Documents ArchiFact prêts à être envoyés"
-        className="h-full w-full object-contain p-2"
-        animate={shouldReduceMotion ? undefined : { scale: [1, 1.015, 1] }}
-        transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
-      />
+      <motion.div
+        className="relative flex h-24 w-20 flex-col justify-between rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-400 p-3 text-white shadow-xl shadow-blue-200/70"
+        animate={shouldReduceMotion ? undefined : { y: [0, -7, 0], rotate: [0, 2, 0] }}
+        transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <div className="h-2 w-10 rounded-full bg-white/90" />
+        <div className="space-y-1.5">
+          <div className="h-1.5 w-full rounded-full bg-white/75" />
+          <div className="h-1.5 w-4/5 rounded-full bg-white/55" />
+          <div className="h-1.5 w-3/5 rounded-full bg-white/55" />
+        </div>
+        <FileText className="absolute -bottom-2 -left-3 h-8 w-8 rounded-xl bg-white p-1.5 text-blue-600 shadow-lg" />
+      </motion.div>
+      <motion.div
+        className="absolute ml-24 grid h-11 w-11 place-items-center rounded-full bg-teal-500 text-white shadow-lg shadow-teal-200/80"
+        animate={shouldReduceMotion ? undefined : { scale: [1, 1.1, 1] }}
+        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <Check className="h-6 w-6" strokeWidth={3} />
+      </motion.div>
     </motion.div>
   );
 
