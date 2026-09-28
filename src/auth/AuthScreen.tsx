@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send, Smartphone, UserRound, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send, UserRound, Zap } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -41,30 +41,38 @@ function ProductIllustration() {
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      <div className="absolute inset-x-5 bottom-4 top-4 flex items-center justify-between gap-2">
+      <div className="absolute inset-x-4 bottom-3 top-3 flex items-center justify-between gap-2">
         <motion.div
-          className="relative flex w-[31%] flex-col items-center justify-end self-end"
+          className="relative flex h-full w-[38%] items-center justify-end"
           initial={{ opacity: 0, x: -14 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="relative z-10 grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-lg shadow-blue-300/60">
-            <UserRound className="h-7 w-7" strokeWidth={1.7} />
+          <div className="absolute bottom-0 left-0 h-20 w-20 rounded-t-[2.5rem] bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 shadow-lg shadow-blue-300/60" />
+          <div className="absolute bottom-[4.5rem] left-5 z-10 h-11 w-11 rounded-full border-2 border-blue-800 bg-[#f3c5a3] shadow-md">
+            <div className="absolute -left-0.5 -top-1 h-3 w-10 rounded-full bg-slate-800" />
           </div>
-          <div className="-mt-2 h-14 w-20 rounded-t-[2rem] bg-gradient-to-br from-blue-600 to-teal-600 shadow-lg shadow-blue-200/70" />
+          <UserRound className="absolute bottom-1 left-2 z-20 h-16 w-16 text-white/25" strokeWidth={1.4} />
           <motion.div
-            className="absolute bottom-8 right-0 z-20 grid h-12 w-7 -rotate-12 place-items-center rounded-md border-2 border-slate-700 bg-slate-950 text-white shadow-lg"
-            animate={shouldReduceMotion ? { rotate: -12 } : { rotate: [-12, -8, -12], y: [0, -2, 0] }}
+            className="absolute bottom-8 right-0 z-20 h-16 w-9 -rotate-[18deg] rounded-lg border-2 border-slate-800 bg-slate-950 p-1 shadow-xl"
+            animate={shouldReduceMotion ? { rotate: -18 } : { rotate: [-18, -12, -18], y: [0, -2, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <Smartphone className="h-7 w-7" strokeWidth={1.6} />
-            <span className="absolute inset-x-1 top-2 h-0.5 rounded-full bg-teal-300 shadow-[0_0_8px_#5eead4]" />
+            <div className="flex h-full flex-col items-center rounded-md bg-gradient-to-br from-slate-700 to-slate-950 pt-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+              <span className="mt-2 h-0.5 w-4 rounded-full bg-white/80" />
+              <span className="mt-1 h-0.5 w-3 rounded-full bg-white/50" />
+              <span className="mt-2 h-4 w-4 rounded border border-teal-300/80" />
+            </div>
           </motion.div>
+          <span className="absolute bottom-1 left-2 z-30 rounded-full bg-white/90 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-blue-700">
+            photo
+          </span>
         </motion.div>
 
-        <div className="relative flex w-[20%] items-center justify-center">
+        <div className="relative flex w-[17%] items-center justify-center">
           <motion.div
-            className="grid h-10 w-10 place-items-center rounded-full bg-white text-blue-600 shadow-lg shadow-blue-200/70"
+            className="z-10 grid h-10 w-10 place-items-center rounded-full bg-white text-blue-600 shadow-lg shadow-blue-200/70"
             animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.16, 1] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
           >
@@ -82,19 +90,19 @@ function ProductIllustration() {
         <AnimatePresence mode="wait">
           <motion.div
             key={documentType}
-            className="relative w-[45%] rounded-2xl border border-teal-100 bg-white p-3 shadow-xl shadow-teal-100/70"
+            className="relative w-[45%] rounded-2xl border-2 border-teal-100 bg-white p-3 shadow-xl shadow-teal-100/70"
             initial={{ opacity: 0, x: 18, rotate: 5, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, rotate: 4, scale: 1 }}
             exit={{ opacity: 0, x: -8, rotate: 0 }}
             transition={{ duration: 0.35 }}
           >
             <div className="flex items-center justify-between">
-              <ReceiptText className="h-5 w-5 text-teal-600" />
+              <ReceiptText className="h-5 w-5 text-teal-600" strokeWidth={2.2} />
               <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-bold text-emerald-700">PRÊT</span>
             </div>
-            <div className="mt-3 h-2 w-4/5 rounded-full bg-slate-200" />
-            <div className="mt-2 h-2 w-3/5 rounded-full bg-slate-100" />
-            <div className="mt-3 rounded-lg bg-gradient-to-r from-blue-100 to-teal-100 px-2 py-1.5 text-[10px] font-bold text-slate-700">
+            <div className="mt-3 h-2 w-4/5 rounded-full bg-slate-300" />
+            <div className="mt-2 h-2 w-3/5 rounded-full bg-slate-200" />
+            <div className="mt-3 rounded-lg bg-gradient-to-r from-blue-100 to-teal-100 px-2 py-1.5 text-[10px] font-extrabold text-slate-800">
               {documentType} généré
             </div>
             <div className="mt-3 flex items-center justify-between">
