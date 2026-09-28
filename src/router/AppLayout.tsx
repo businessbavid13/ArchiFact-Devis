@@ -105,8 +105,8 @@ function AppLayoutInner() {
   const headerProps = getHeaderProps();
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-0 sm:p-4 select-none font-sans text-slate-800">
-      <div className="w-full sm:max-w-[420px] h-screen sm:h-[860px] bg-white sm:rounded-[44px] shadow-2xl overflow-hidden flex flex-col relative sm:border-[8px] sm:border-slate-800/90">
+    <div className="min-h-[100dvh] bg-slate-900 flex items-center justify-center p-0 sm:p-4 select-none font-sans text-slate-800">
+      <div className="w-full min-h-[100dvh] bg-white shadow-2xl overflow-hidden flex flex-col relative sm:max-w-[560px] sm:min-h-0 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:max-w-[1400px] lg:h-[calc(100dvh-2rem)] lg:rounded-[28px]">
         <MobileStatusBar />
 
         <AppHeader
