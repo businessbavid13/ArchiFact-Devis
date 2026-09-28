@@ -18,6 +18,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { CompanySettings } from '../../types';
+import { DialogPanel } from '../../components/Dialog/DialogPanel';
 
 interface SettingsScreenProps {
   settings: CompanySettings;
@@ -388,9 +389,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       {/* Info Details Modal */}
       {infoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-lg shadow-xl overflow-hidden border border-slate-200 animate-in fade-in duration-150">
+          <DialogPanel onClose={() => setInfoModal(null)} aria-labelledby="settings-info-modal-title" className="w-full max-w-sm bg-white rounded-lg shadow-xl overflow-hidden border border-slate-200 animate-in fade-in duration-150">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-slate-900">{infoModal.title}</h3>
+              <h3 id="settings-info-modal-title" className="text-xs font-semibold text-slate-900">{infoModal.title}</h3>
               <button
                 type="button"
                 onClick={() => setInfoModal(null)}
@@ -413,16 +414,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 Fermer
               </button>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
 
       {/* Edit Company Modal */}
       {isCompanyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden border border-slate-200 animate-in fade-in duration-150">
+          <DialogPanel onClose={() => setIsCompanyModalOpen(false)} aria-labelledby="company-modal-title" className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden border border-slate-200 animate-in fade-in duration-150">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-slate-900">Informations sur l'entreprise</h3>
+              <h3 id="company-modal-title" className="text-xs font-semibold text-slate-900">Informations sur l'entreprise</h3>
               <button
                 type="button"
                 onClick={() => setIsCompanyModalOpen(false)}
@@ -498,7 +499,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 </button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
       </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Plus, Trash2, User, Mail, Phone, MapPin } from 'lucide-react';
 import { Button } from '../../components/Button/Button';
 import { Client } from '../../types';
+import { DialogPanel } from '../../components/Dialog/DialogPanel';
 
 interface ClientsScreenProps {
   clients: Client[];
@@ -196,7 +197,7 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
       {/* Modal / Bottom Sheet Nouveau Client (Matching screenshot 5) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs" role="presentation">
-          <div role="dialog" aria-modal="true" aria-labelledby="client-modal-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+          <DialogPanel onClose={() => setIsModalOpen(false)} aria-labelledby="client-modal-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 id="client-modal-title" className="text-sm font-bold text-slate-900">
                 {editingClient ? 'Modifier le client' : 'Nouveau Client'}
@@ -290,7 +291,7 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                 </Button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
     </div>

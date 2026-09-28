@@ -3,6 +3,7 @@ import { X, Sparkles, Check, CreditCard, Smartphone, CheckCircle, ShieldCheck, A
 import { Button } from '../Button/Button';
 import { CreditPlan } from '../../types';
 import { formatCurrency } from '../../utils/formatting';
+import { DialogPanel } from '../Dialog/DialogPanel';
 
 interface CreditsModalProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" role="presentation">
-      <div role="dialog" aria-modal="true" aria-labelledby="credits-modal-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-modal-enter">
+      <DialogPanel onClose={handleCloseAll} aria-labelledby="credits-modal-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-modal-enter">
         {/* Header */}
         <div className="bg-slate-900 text-white px-4 py-3.5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
@@ -308,7 +309,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
             </Button>
           </div>
         )}
-      </div>
+      </DialogPanel>
     </div>
   );
 };

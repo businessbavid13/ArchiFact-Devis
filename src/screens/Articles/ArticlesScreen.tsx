@@ -3,6 +3,7 @@ import { Search, Plus, Trash2, Package, FileText, Coins, Camera } from 'lucide-r
 import { Button } from '../../components/Button/Button';
 import { Article } from '../../types';
 import { formatCurrency } from '../../utils/formatting';
+import { DialogPanel } from '../../components/Dialog/DialogPanel';
 
 interface ArticlesScreenProps {
   articles: Article[];
@@ -198,9 +199,9 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
       {/* Modal Nouvel Article / Service (Matching screenshot 10) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+          <DialogPanel onClose={() => setIsModalOpen(false)} aria-labelledby="article-modal-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900">
+              <h3 id="article-modal-title" className="text-sm font-bold text-slate-900">
                 {editingArticle ? "Modifier l'article" : 'Nouvel Article/Service'}
               </h3>
               <button
@@ -279,7 +280,7 @@ export const ArticlesScreen: React.FC<ArticlesScreenProps> = ({
                 </Button>
               </div>
             </form>
-          </div>
+          </DialogPanel>
         </div>
       )}
     </div>

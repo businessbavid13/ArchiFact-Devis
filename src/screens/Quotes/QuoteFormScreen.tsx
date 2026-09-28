@@ -6,6 +6,7 @@ import { formatCurrency, getTodayFormatted, getFutureDateFormatted } from '../..
 import { calculateDocumentTotals } from '../../utils/calculations';
 import { VoiceDictationModal } from '../../components/VoiceDictationModal/VoiceDictationModal';
 import { DocumentPdfData } from '../../utils/pdfGenerator';
+import { DialogPanel } from '../../components/Dialog/DialogPanel';
 
 interface QuoteFormScreenProps {
   initialQuote?: Quote | null;
@@ -563,9 +564,9 @@ export const QuoteFormScreen: React.FC<QuoteFormScreenProps> = ({
       {/* Article Picker Sheet */}
       {isArticlePickerOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-xl overflow-hidden max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-200">
+          <DialogPanel onClose={() => setIsArticlePickerOpen(false)} aria-labelledby="quote-article-picker-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-xl overflow-hidden max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-200">
             <div className="bg-slate-900 text-white p-3.5 flex items-center justify-between">
-              <span className="text-sm font-bold">Sélectionner un article</span>
+              <span id="quote-article-picker-title" className="text-sm font-bold">Sélectionner un article</span>
               <button
                 type="button"
                 onClick={() => setIsArticlePickerOpen(false)}
@@ -640,7 +641,7 @@ export const QuoteFormScreen: React.FC<QuoteFormScreenProps> = ({
                 </Button>
               </div>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
       {/* Voice Dictation Modal for Hands-free Job Site Input */}
