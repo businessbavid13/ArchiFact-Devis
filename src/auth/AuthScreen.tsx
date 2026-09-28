@@ -42,7 +42,7 @@ function ProductIllustration() {
 
   return (
     <motion.div
-      className="relative mx-auto h-52 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 shadow-inner sm:h-56 lg:h-64"
+      className="relative mx-auto h-[290px] w-full max-w-[390px] overflow-hidden rounded-[1.5rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 shadow-inner sm:h-56 sm:rounded-[2rem] lg:h-64"
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
@@ -229,8 +229,8 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f8fafc] px-5 py-8 text-slate-900 sm:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center justify-center">
+    <main className="min-h-screen overflow-hidden bg-[#f8fafc] px-2 py-2 text-slate-900 sm:px-8 sm:py-8">
+      <div className="mx-auto flex min-h-[calc(100vh-1rem)] w-full max-w-6xl items-center justify-center sm:min-h-[calc(100vh-4rem)]">
         <motion.div
           className="grid w-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl shadow-slate-200/70 lg:grid-cols-[0.95fr_1.05fr]"
           initial={{ opacity: 0, y: 20 }}
@@ -254,11 +254,10 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
             <ProductIllustration />
           </section>
 
-          <section className="flex min-h-[680px] flex-col justify-center px-6 py-10 sm:px-12 lg:px-16">
+          <section className="flex min-h-[calc(100vh-1rem)] flex-col justify-center px-6 py-7 sm:min-h-[680px] sm:px-12 sm:py-10 lg:px-16">
             <div className="mx-auto w-full max-w-md">
-              <div className="mb-10 flex items-center gap-3 lg:hidden">
-                <BrandMark />
-                <span className="text-2xl font-bold tracking-tight text-slate-950">ArchiFact</span>
+              <div className="mb-7 flex justify-center lg:hidden">
+                <BrandLogo />
               </div>
               <div className="mb-8 lg:hidden">
                 <ProductIllustration />
@@ -273,9 +272,11 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
                     exit={{ opacity: 0, x: -12 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <h1 className="text-3xl font-bold tracking-[-0.03em] text-slate-950">Bienvenue sur ArchiFact</h1>
-                    <p className="mt-3 text-base leading-6 text-slate-500">
-                      Connectez-vous pour gérer vos devis et factures.
+                    <h1 className="text-center text-3xl font-bold leading-[1.1] tracking-[-0.04em] text-slate-950 lg:text-left">
+                      Vos documents en toute simplicité
+                    </h1>
+                    <p className="mt-3 text-center text-base leading-6 text-slate-500 lg:text-left">
+                      Connectez-vous pour créer, gérer et exporter vos devis et factures.
                     </p>
 
                     <button
@@ -305,7 +306,7 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
                           type="email"
                           value={email}
                           onChange={(event) => { setEmail(event.target.value); setError(null); }}
-                          placeholder="vous@entreprise.com"
+                          placeholder="Votre adresse email"
                           autoComplete="email"
                           disabled={isLoading}
                           className={`min-h-14 w-full rounded-2xl border bg-slate-50 pl-12 text-[16px] outline-none transition placeholder:text-slate-400 focus:bg-white focus:ring-4 focus:ring-blue-100 ${
@@ -400,6 +401,18 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
               <p className="mt-10 text-center text-xs leading-5 text-slate-400">
                 En continuant, vous acceptez les <u>Conditions d’utilisation</u> et la <u>Politique de confidentialité</u> d’ArchiFact.
               </p>
+              {step === 'email' && (
+                <p className="mt-8 text-center text-sm text-slate-400">
+                  Vous n’avez pas de compte ?{' '}
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('auth-email')?.focus()}
+                    className="font-medium text-blue-600 transition hover:text-blue-700"
+                  >
+                    Créer un compte
+                  </button>
+                </p>
+              )}
             </div>
           </section>
         </motion.div>
