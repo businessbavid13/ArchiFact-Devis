@@ -42,13 +42,13 @@ function ProductIllustration() {
 
   return (
     <motion.div
-      className="relative mx-auto flex h-36 w-full max-w-[390px] items-center justify-center"
+      className="relative mx-auto flex h-36 w-full max-w-[390px] items-center justify-center sm:h-48 lg:h-64"
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
     >
       <motion.div
-        className="relative flex h-24 w-20 flex-col justify-between rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-400 p-3 text-white shadow-xl shadow-blue-200/70"
+        className="relative flex h-24 w-20 flex-col justify-between rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-400 p-3 text-white shadow-xl shadow-blue-200/70 sm:h-28 sm:w-24 lg:h-36 lg:w-28 lg:p-4"
         animate={shouldReduceMotion ? undefined : { y: [0, -7, 0], rotate: [0, 2, 0] }}
         transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
       >
@@ -61,7 +61,7 @@ function ProductIllustration() {
         <FileText className="absolute -bottom-2 -left-3 h-8 w-8 rounded-xl bg-white p-1.5 text-blue-600 shadow-lg" />
       </motion.div>
       <motion.div
-        className="absolute ml-24 grid h-11 w-11 place-items-center rounded-full bg-teal-500 text-white shadow-lg shadow-teal-200/80"
+        className="absolute ml-24 grid h-11 w-11 place-items-center rounded-full bg-teal-500 text-white shadow-lg shadow-teal-200/80 sm:ml-28 lg:ml-36 lg:h-14 lg:w-14"
         animate={shouldReduceMotion ? undefined : { scale: [1, 1.1, 1] }}
         transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
       >
@@ -411,21 +411,6 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
                 </motion.p>
               )}
 
-              <p className="mt-10 text-center text-xs leading-5 text-slate-400">
-                En continuant, vous acceptez les <u>Conditions d’utilisation</u> et la <u>Politique de confidentialité</u> d’ArchiFact.
-              </p>
-              {step === 'email' && (
-                <p className="mt-8 text-center text-sm text-slate-400">
-                  Vous n’avez pas de compte ?{' '}
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('auth-email')?.focus()}
-                    className="font-medium text-blue-600 transition hover:text-blue-700"
-                  >
-                    Créer un compte
-                  </button>
-                </p>
-              )}
             </div>
           </section>
         </motion.div>
