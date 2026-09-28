@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, X, Save, Zap, Sliders, FileText } from 'lucide-react';
+import { ArrowLeft, X, Save, Zap, Sliders } from 'lucide-react';
 
 export interface AppHeaderProps {
   title?: string;
@@ -59,9 +59,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {isNavRoot ? (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0">
-              <FileText className="w-4 h-4 stroke-[2.2]" />
-            </div>
+            <img
+              src="/branding/archifact-horizontal.png"
+              alt="ArchiFact"
+              className="h-8 w-auto max-w-[132px] object-contain object-left shrink-0"
+            />
             <div className="min-w-0">
               <div className="flex items-center gap-2 leading-none">
                 <span className="text-sm font-bold tracking-tight text-slate-900">

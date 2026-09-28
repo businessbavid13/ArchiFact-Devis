@@ -3,6 +3,21 @@
 @theme {
   --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+}
+
+.standalone-status-bar {
+  display: none;
+}
+
+@media (display-mode: standalone) and (max-width: 1023px) {
+  .standalone-status-bar {
+    display: flex;
+  }
 }
 
 @layer base {

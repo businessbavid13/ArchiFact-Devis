@@ -9,7 +9,7 @@ export const MobileStatusBar: React.FC<MobileStatusBarProps> = ({ dark = false }
   const textColor = dark ? 'text-white' : 'text-slate-800';
 
   return (
-    <div className={`w-full px-5 pt-2 pb-1.5 flex items-center justify-between text-xs font-semibold tracking-tight ${textColor} select-none transition-colors lg:hidden`}>
+    <div className={`standalone-status-bar w-full px-5 pt-2 pb-1.5 items-center justify-between text-xs font-semibold tracking-tight ${textColor} select-none transition-colors`}>
       <span className="font-bold text-[13px] tracking-tight">09:20</span>
       <div className="flex items-center gap-1.5">
         <span className="text-[10px] font-bold tracking-widest mr-0.5">4G</span>
