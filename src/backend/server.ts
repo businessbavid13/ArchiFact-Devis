@@ -17,14 +17,14 @@ import {
   verifyGeniusPaySignature,
   AuthenticatedUser,
   CreditOperation,
-} from './credits';
+} from './credits.ts';
 import {
   clientKey,
   createRateLimiter,
   requestIdMiddleware,
   userOrClientKey,
   writeSecurityAudit,
-} from './security';
+} from './security.ts';
 
 const app = express();
 const port = process.env.PORT || 5000;

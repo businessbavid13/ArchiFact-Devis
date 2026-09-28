@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { NextFunction, Request, Response } from 'express';
-import { adminSupabase } from './credits';
+import { adminSupabase } from './credits.ts';
 
 type RateLimitOptions = {
   windowMs: number;
