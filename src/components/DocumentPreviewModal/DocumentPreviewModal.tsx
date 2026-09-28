@@ -331,8 +331,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         onChange={(e) => handleFileUpload(e, 'footerImageUrl')}
       />
 
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-        <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] relative">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200" role="presentation">
+        <div role="dialog" aria-modal="true" aria-labelledby="document-preview-modal-title" className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] relative">
           
           {/* Notification Banner for PDF Download */}
           {downloadSuccess && (
@@ -346,7 +346,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between z-10 shrink-0">
             <div className="flex items-center gap-2">
               <span className="font-bold text-sm tracking-wide">
-                Aperçu {isQuote ? 'Devis' : 'Facture'}
+                <span id="document-preview-modal-title">Aperçu {isQuote ? 'Devis' : 'Facture'}</span>
               </span>
               <span
                 className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full"

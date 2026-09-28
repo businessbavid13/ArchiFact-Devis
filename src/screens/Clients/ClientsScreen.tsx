@@ -195,15 +195,16 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
 
       {/* Modal / Bottom Sheet Nouveau Client (Matching screenshot 5) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="client-modal-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-200">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900">
+              <h3 id="client-modal-title" className="text-sm font-bold text-slate-900">
                 {editingClient ? 'Modifier le client' : 'Nouveau Client'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
+                aria-label="Fermer"
                 className="text-slate-400 hover:text-slate-600 text-sm font-bold"
               >
                 X

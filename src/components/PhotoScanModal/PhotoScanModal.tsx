@@ -164,8 +164,8 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
         : AI_CREDIT_COSTS.AI_INVOICE_FROM_IMAGE;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-lg bg-white rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-modal-enter">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" role="presentation">
+      <div role="dialog" aria-modal="true" aria-labelledby="photo-scan-modal-title" className="w-full max-w-lg bg-white rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-modal-enter">
         {/* Header */}
         <div className="bg-slate-900 text-white px-4 py-3.5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
@@ -173,7 +173,7 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-tight text-white">{typeLabels[documentType]}</h3>
+              <h3 id="photo-scan-modal-title" className="text-sm font-bold tracking-tight text-white">{typeLabels[documentType]}</h3>
               <p className="text-[11px] text-slate-400 font-normal">
                 Support multi-pages • {requiredCredits} crédits • Fusion automatique
               </p>

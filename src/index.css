@@ -37,6 +37,11 @@
     min-height: 100dvh;
     overscroll-behavior-y: none;
   }
+
+  :focus-visible {
+    outline: 3px solid rgb(99 102 241 / 0.55);
+    outline-offset: 2px;
+  }
 }
 
 @utility pb-safe {
