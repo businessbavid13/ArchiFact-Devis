@@ -1,14 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MobileStatusBar } from '../components/StatusBar/MobileStatusBar';
 import { AppHeader } from '../components/Header/AppHeader';
 import { BottomTabBar, TabType } from '../components/BottomTabs/BottomTabBar';
 import { SidebarNav } from '../components/Sidebar/SidebarNav';
-import { PhotoScanModal } from '../components/PhotoScanModal/PhotoScanModal';
-import { CreditsModal } from '../components/CreditsModal/CreditsModal';
-import { DocumentPreviewModal } from '../components/DocumentPreviewModal/DocumentPreviewModal';
 import { AppProvider, useAppContext } from './AppContext';
 import { Invoice, Quote } from '../types';
+
+const PhotoScanModal = lazy(() =>
+  import('../components/PhotoScanModal/PhotoScanModal').then(({ PhotoScanModal }) => ({ default: PhotoScanModal }))
+);
+const CreditsModal = lazy(() =>
+  import('../components/CreditsModal/CreditsModal').then(({ CreditsModal }) => ({ default: CreditsModal }))
+);
+const DocumentPreviewModal = lazy(() =>
+  import('../components/DocumentPreviewModal/DocumentPreviewModal').then(({ DocumentPreviewModal }) => ({ default: DocumentPreviewModal }))
+);
 
 /**
  * Maps URL pathname to the active BottomTab
@@ -146,6 +153,8 @@ function AppLayoutInner() {
         </div>
 
         {/* Global Modals */}
+        <Suspense fallback={null}>
+        {ctx.isPhotoScanOpen && (
         <PhotoScanModal
           isOpen={ctx.isPhotoScanOpen}
           onClose={() => ctx.setIsPhotoScanOpen(false)}
@@ -168,7 +177,9 @@ function AppLayoutInner() {
           }}
           onExtracted={ctx.handlePhotoScanExtracted}
         />
+        )}
 
+        {ctx.isCreditsModalOpen && (
         <CreditsModal
           isOpen={ctx.isCreditsModalOpen}
           onClose={() => ctx.setIsCreditsModalOpen(false)}
@@ -178,6 +189,7 @@ function AppLayoutInner() {
           loadError={ctx.creditsError}
           onCreatePayment={ctx.createPayment}
         />
+        )}
 
         {ctx.previewData && (
           <DocumentPreviewModal
@@ -187,6 +199,7 @@ function AppLayoutInner() {
             {...ctx.previewData}
           />
         )}
+        </Suspense>
       </div>
     </div>
   );

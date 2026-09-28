@@ -1,4 +1,5 @@
-const CACHE_NAME = 'archifact-shell-v1';
+const CACHE_NAME = 'archifact-shell-v2';
+const NETWORK_ONLY_PREFIXES = ['/api/', '/ai/', '/credits/', '/payments/', '/webhooks/', '/auth/', '/health'];
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -29,12 +30,17 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+  if (NETWORK_ONLY_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))) return;
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        if (response.ok && response.type === 'basic') {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
         return response;
       })
       .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/index.html'))),

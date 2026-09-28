@@ -5,7 +5,6 @@ import { useAppContext } from '../AppContext';
 import { useEditingContext } from '../AppLayout';
 import { Quote } from '../../types';
 import { createQuoteDocumentData } from '../../utils/documentData';
-import { downloadDocumentExcel } from '../../utils/excelGenerator';
 
 export function QuotesPage() {
   const navigate = useNavigate();
@@ -19,6 +18,7 @@ export function QuotesPage() {
 
   const handleDownloadExcel = async (quo: Quote) => {
     const client = ctx.clients.find((c) => c.id === quo.clientId);
+    const { downloadDocumentExcel } = await import('../../utils/excelGenerator');
     await downloadDocumentExcel(createQuoteDocumentData(quo, client, ctx.settings));
   };
 

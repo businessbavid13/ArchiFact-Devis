@@ -11,6 +11,7 @@ export function ArticlesPage() {
       onAddArticle={ctx.addArticle}
       onUpdateArticle={ctx.updateArticle}
       onDeleteArticle={ctx.deleteArticle}
+      onRestoreArticle={ctx.addArticle}
       onScanArticlePhoto={() => ctx.openPhotoScan('article')}
     />
   );
