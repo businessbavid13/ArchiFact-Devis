@@ -8,6 +8,7 @@ interface ClientsScreenProps {
   onAddClient: (client: Client) => void;
   onUpdateClient: (client: Client) => void;
   onDeleteClient: (id: string) => void;
+  onRestoreClient: (client: Client) => void;
 }
 
 export const ClientsScreen: React.FC<ClientsScreenProps> = ({
@@ -15,16 +16,24 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
   onAddClient,
   onUpdateClient,
   onDeleteClient,
+  onRestoreClient,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [undoClient, setUndoClient] = useState<Client | null>(null);
 
   // Form fields matching screenshot 5
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+
+  const handleDeleteClient = (client: Client) => {
+    onDeleteClient(client.id);
+    setUndoClient(client);
+    window.setTimeout(() => setUndoClient((current) => current?.id === client.id ? null : current), 5000);
+  };
 
   const filteredClients = clients.filter((c) => {
     const q = searchQuery.toLowerCase();
@@ -140,9 +149,7 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Supprimer le client ${client.name} ?`)) {
-                        onDeleteClient(client.id);
-                      }
+                      handleDeleteClient(client);
                     }}
                     className="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
                     title="Supprimer"
@@ -155,6 +162,22 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
           })
         )}
       </div>
+
+      {undoClient && (
+        <div className="fixed bottom-20 left-4 right-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg bg-slate-900 px-4 py-3 text-white shadow-xl">
+          <span className="text-xs">Client supprimé</span>
+          <button
+            type="button"
+            onClick={() => {
+              onRestoreClient(undoClient);
+              setUndoClient(null);
+            }}
+            className="min-h-9 rounded-md px-3 text-xs font-bold text-blue-200 hover:bg-white/10"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
 
       {/* Floating Action Button (Matching screenshot 12: + Nouveau Client) */}
       <div className="fixed bottom-20 right-5 z-20">

@@ -29,6 +29,7 @@ export function InvoiceFormPage() {
       }}
       onOpenPreview={(data) => ctx.setPreviewData(data)}
       onOpenPhotoScan={() => ctx.openPhotoScan('invoice')}
+      onAddClient={ctx.addClient}
     />
   );
 }

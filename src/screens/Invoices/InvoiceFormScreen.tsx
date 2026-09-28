@@ -16,6 +16,7 @@ interface InvoiceFormScreenProps {
   onBack: () => void;
   onOpenPreview: (data: DocumentPdfData) => void;
   onOpenPhotoScan: () => void;
+  onAddClient: (client: Client) => void;
 }
 
 export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
@@ -27,6 +28,7 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
   onBack,
   onOpenPreview,
   onOpenPhotoScan,
+  onAddClient,
 }) => {
   const [invoiceNumber, setInvoiceNumber] = useState(
     initialInvoice ? initialInvoice.number : `FACT-${String(Math.floor(Math.random() * 9000) + 1000)}`
@@ -68,6 +70,9 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
   const [customItemName, setCustomItemName] = useState('');
   const [customItemPrice, setCustomItemPrice] = useState<number>(0);
   const [customItemQty, setCustomItemQty] = useState<number>(1);
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
 
   // Calculations
   const totals = calculateDocumentTotals(items, discountType, discountValue, taxRate);
@@ -141,6 +146,22 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
       createdAt: initialInvoice ? initialInvoice.createdAt : new Date().toISOString(),
     };
     onSave(newInvoice);
+  };
+
+  const handleCreateClient = () => {
+    const name = newClientName.trim();
+    if (!name) return;
+    const client: Client = {
+      id: crypto.randomUUID(),
+      name,
+      phone: newClientPhone.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    onAddClient(client);
+    setSelectedClientId(client.id);
+    setNewClientName('');
+    setNewClientPhone('');
+    setIsCreatingClient(false);
   };
 
   const handleOpenApercu = () => {
@@ -224,6 +245,13 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
           <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
             <User className="w-3.5 h-3.5 text-slate-400" />
             Client
+            <button
+              type="button"
+              onClick={() => setIsCreatingClient((current) => !current)}
+              className="ml-auto inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-[11px] font-bold text-blue-700 hover:bg-blue-50"
+            >
+              <Plus className="h-3.5 w-3.5" /> Nouveau
+            </button>
           </label>
           <div className="relative">
             <select
@@ -246,6 +274,26 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
             <p className="text-[11px] text-slate-400 px-1">
               {selectedClient.phone || 'Email non fourni'} • {selectedClient.address || 'Abidjan'}
             </p>
+          )}
+          {isCreatingClient && (
+            <div className="mt-2 grid gap-2 rounded-lg border border-blue-100 bg-blue-50/60 p-3 sm:grid-cols-[1fr_10rem_auto]">
+              <input
+                value={newClientName}
+                onChange={(event) => setNewClientName(event.target.value)}
+                placeholder="Nom du client"
+                className="min-h-10 rounded-md border border-slate-200 bg-white px-3 text-xs"
+                autoFocus
+              />
+              <input
+                value={newClientPhone}
+                onChange={(event) => setNewClientPhone(event.target.value)}
+                placeholder="Téléphone"
+                className="min-h-10 rounded-md border border-slate-200 bg-white px-3 text-xs"
+              />
+              <Button type="button" size="sm" onClick={handleCreateClient} disabled={!newClientName.trim()}>
+                Ajouter
+              </Button>
+            </div>
           )}
         </div>
 

@@ -78,6 +78,12 @@ function AppLayoutInner() {
         onClose: () => navigate('/settings'),
       };
     }
+    if (path === '/') {
+      return {
+        title: 'Accueil',
+        subtitle: 'Votre activité en un coup d’œil',
+      };
+    }
 
     switch (activeTab) {
       case 'invoices':

@@ -11,6 +11,7 @@ export function ClientsPage() {
       onAddClient={ctx.addClient}
       onUpdateClient={ctx.updateClient}
       onDeleteClient={ctx.deleteClient}
+      onRestoreClient={ctx.addClient}
     />
   );
 }

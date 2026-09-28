@@ -51,11 +51,18 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
   const [isScanning, setIsScanning] = useState(false);
   const [scanStep, setScanStep] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [reviewExtract, setReviewExtract] = useState<PhotoScanExtract | null>(null);
 
   const fileInputCameraRef = useRef<HTMLInputElement>(null);
   const fileInputGalleryRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const handleClose = () => {
+    setReviewExtract(null);
+    setErrorMsg(null);
+    onClose();
+  };
 
   const typeLabels = {
     quote: 'Nouveau Devis par scan photo',
@@ -136,11 +143,10 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
 
       setScanStep('Document complet généré avec succès');
 
-      setTimeout(() => {
-        setIsScanning(false);
-        onExtracted(result);
-        onClose();
-      }, 500);
+        setTimeout(() => {
+          setIsScanning(false);
+          setReviewExtract(result);
+        }, 500);
     } catch {
       if (reservationId) await onRefundReservation(reservationId).catch(() => undefined);
       setIsScanning(false);
@@ -174,7 +180,7 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center text-slate-400 hover:text-white rounded-md active:scale-95 transition-all duration-150"
             aria-label="Fermer"
           >
@@ -184,6 +190,42 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
 
         {/* Content */}
         <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain flex-1 space-y-4">
+          {reviewExtract ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                  <div>
+                    <h4 className="text-sm font-bold text-blue-950">Vérifiez les données extraites</h4>
+                    <p className="mt-1 text-xs leading-5 text-blue-800">
+                      L’analyse IA a prérempli ce document. Corrigez les informations dans le formulaire après validation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-500">Client</span>
+                  <span className="text-sm font-bold text-slate-900">{reviewExtract.clientName || 'À compléter'}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-500">Articles extraits</span>
+                  <span className="text-sm font-bold text-slate-900">{reviewExtract.items.length}</span>
+                </div>
+                <div className="divide-y divide-slate-100 border-t border-slate-100">
+                  {reviewExtract.items.slice(0, 5).map((item, index) => (
+                    <div key={`${item.name}-${index}`} className="flex items-center justify-between gap-3 py-2">
+                      <span className="min-w-0 truncate text-xs text-slate-700">{item.name || 'Article sans libellé'}</span>
+                      <span className="shrink-0 text-xs font-semibold text-slate-900">
+                        {item.quantity} × {item.unitPrice.toLocaleString('fr-FR')} FCFA
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+          <>
           {/* Credit reminder banner */}
           <div className="bg-blue-50/80 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -455,6 +497,8 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
               </p>
             </div>
           )}
+          </>
+          )}
         </div>
 
         {/* Footer actions */}
@@ -463,13 +507,27 @@ export const PhotoScanModal: React.FC<PhotoScanModalProps> = ({
             variant="outline"
             size="md"
             fullWidth
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isScanning}
           >
-            Annuler
+            {reviewExtract ? 'Recommencer' : 'Annuler'}
           </Button>
 
-          {creditsBalance < requiredCredits ? (
+          {reviewExtract ? (
+            <Button
+              variant="primary"
+              size="md"
+              fullWidth
+              onClick={() => {
+                onExtracted(reviewExtract);
+                setReviewExtract(null);
+                onClose();
+              }}
+              icon={ArrowRight}
+            >
+              Utiliser ces données
+            </Button>
+          ) : creditsBalance < requiredCredits ? (
             <Button
               variant="amber"
               size="md"

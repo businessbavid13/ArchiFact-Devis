@@ -37,6 +37,7 @@ export function InvoicesPage() {
         navigate(`/invoices/${inv.id}`);
       }}
       onDeleteInvoice={ctx.deleteInvoice}
+      onRestoreInvoice={ctx.saveInvoice}
       onDuplicateInvoice={ctx.duplicateInvoice}
       onUpdateInvoiceStatus={ctx.updateInvoiceStatus}
       onPreviewInvoice={handlePreviewInvoice}

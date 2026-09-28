@@ -29,6 +29,7 @@ export function QuoteFormPage() {
       }}
       onOpenPreview={(data) => ctx.setPreviewData(data)}
       onOpenPhotoScan={() => ctx.openPhotoScan('quote')}
+      onAddClient={ctx.addClient}
     />
   );
 }

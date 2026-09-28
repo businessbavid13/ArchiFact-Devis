@@ -8,6 +8,7 @@ import { ArticlesPage } from './pages/ArticlesPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { CustomizationPage } from './pages/CustomizationPage';
+import { HomePage } from './pages/HomePage';
 
 /**
  * Application router configuration.
@@ -19,7 +20,7 @@ export const router = createHashRouter([
     element: <AppLayout />,
     children: [
       // Default redirect
-      { index: true, element: <Navigate to="/invoices" replace /> },
+      { index: true, element: <HomePage /> },
 
       // Invoices
       { path: 'invoices', element: <InvoicesPage /> },

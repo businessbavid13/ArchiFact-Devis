@@ -43,6 +43,7 @@ export function QuotesPage() {
         navigate(`/quotes/${quo.id}`);
       }}
       onDeleteQuote={ctx.deleteQuote}
+      onRestoreQuote={ctx.saveQuote}
       onDuplicateQuote={ctx.duplicateQuote}
       onUpdateQuoteStatus={ctx.updateQuoteStatus}
       onConvertToInvoice={handleConvertToInvoice}

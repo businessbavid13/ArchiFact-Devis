@@ -28,6 +28,7 @@ interface QuotesListScreenProps {
   onScanPhoto: () => void;
   onSelectQuote: (quote: Quote) => void;
   onDeleteQuote: (id: string) => void;
+  onRestoreQuote: (quote: Quote) => void;
   onDuplicateQuote?: (quote: Quote) => void;
   onUpdateQuoteStatus?: (id: string, newStatus: 'pending' | 'accepted' | 'declined') => void;
   onConvertToInvoice: (quote: Quote) => void;
@@ -43,6 +44,7 @@ export const QuotesListScreen: React.FC<QuotesListScreenProps> = ({
   onScanPhoto,
   onSelectQuote,
   onDeleteQuote,
+  onRestoreQuote,
   onDuplicateQuote,
   onUpdateQuoteStatus,
   onConvertToInvoice,
@@ -51,6 +53,13 @@ export const QuotesListScreen: React.FC<QuotesListScreenProps> = ({
 }) => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'accepted' | 'declined'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [undoQuote, setUndoQuote] = useState<Quote | null>(null);
+
+  const handleDeleteQuote = (quote: Quote) => {
+    onDeleteQuote(quote.id);
+    setUndoQuote(quote);
+    window.setTimeout(() => setUndoQuote((current) => current?.id === quote.id ? null : current), 5000);
+  };
 
   const getClient = (clientId: string) => {
     return clients.find((c) => c.id === clientId);
@@ -253,9 +262,7 @@ export const QuotesListScreen: React.FC<QuotesListScreenProps> = ({
                 leftActionIcon={<Trash2 className="w-4 h-4 text-white" />}
                 leftActionBg="bg-rose-600"
                 onSwipeLeft={() => {
-                  if (confirm(`Voulez-vous supprimer le devis ${quote.number} ?`)) {
-                    onDeleteQuote(quote.id);
-                  }
+                  handleDeleteQuote(quote);
                 }}
                 onClick={() => onSelectQuote(quote)}
               >
@@ -363,9 +370,7 @@ export const QuotesListScreen: React.FC<QuotesListScreenProps> = ({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (confirm('Voulez-vous supprimer ce devis ?')) {
-                            onDeleteQuote(quote.id);
-                          }
+                        handleDeleteQuote(quote);
                         }}
                         className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                         title="Supprimer"
@@ -444,6 +449,22 @@ export const QuotesListScreen: React.FC<QuotesListScreenProps> = ({
           })
         )}
       </div>
+
+      {undoQuote && (
+        <div className="fixed bottom-20 left-4 right-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg bg-slate-900 px-4 py-3 text-white shadow-xl">
+          <span className="text-xs">Devis supprimé</span>
+          <button
+            type="button"
+            onClick={() => {
+              onRestoreQuote(undoQuote);
+              setUndoQuote(null);
+            }}
+            className="min-h-9 rounded-md px-3 text-xs font-bold text-blue-200 hover:bg-white/10"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
 
       {/* Floating Action Button */}
       <div className="fixed bottom-16 right-5 z-20">
