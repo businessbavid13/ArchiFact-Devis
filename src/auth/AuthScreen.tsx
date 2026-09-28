@@ -41,6 +41,23 @@ function ProductIllustration() {
   }, [shouldReduceMotion]);
 
   return (
+    <motion.div
+      className="relative mx-auto h-52 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 shadow-inner sm:h-56 lg:h-64"
+      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
+    >
+      <motion.img
+        src="/branding/onboarding-documents.webp"
+        alt="Documents ArchiFact prêts à être envoyés"
+        className="h-full w-full object-contain p-2"
+        animate={shouldReduceMotion ? undefined : { scale: [1, 1.015, 1] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+    </motion.div>
+  );
+
+  return (
     <div className="relative mx-auto h-52 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 p-4 shadow-inner sm:h-56 lg:h-64 lg:p-5">
       <motion.img
         src="/branding/onboarding-documents.webp"
