@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, FileCheck2, FileText, Loader2, Mail, ReceiptText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -18,9 +18,22 @@ function BrandMark() {
 
 function ProductIllustration() {
   const shouldReduceMotion = useReducedMotion();
+  const [documentType, setDocumentType] = useState<'Devis' | 'Facture'>('Devis');
+
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+    const interval = window.setInterval(() => {
+      setDocumentType((current) => current === 'Devis' ? 'Facture' : 'Devis');
+    }, 4200);
+    return () => window.clearInterval(interval);
+  }, [shouldReduceMotion]);
 
   return (
-    <div className="relative mx-auto h-56 w-full max-w-[360px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 shadow-inner">
+    <div className="relative mx-auto h-64 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 p-5 shadow-inner">
+      <div className="relative z-10 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+        <span>Photo → IA → document</span>
+        <span className="rounded-full bg-white/80 px-2 py-1 text-blue-600 shadow-sm">en quelques secondes</span>
+      </div>
       <motion.div
         className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-blue-200/40 blur-2xl"
         animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.12, 1], opacity: [0.45, 0.7, 0.45] }}
@@ -32,48 +45,69 @@ function ProductIllustration() {
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      <motion.div
-        className="absolute left-[14%] top-[22%] w-[58%] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/70"
-        initial={{ opacity: 0, y: 18, rotate: -4 }}
-        animate={{ opacity: 1, y: 0, rotate: -4 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <div className="h-2 w-20 rounded-full bg-slate-200" />
-            <div className="mt-2 h-1.5 w-12 rounded-full bg-slate-100" />
+      <div className="absolute inset-x-5 bottom-5 top-14 flex items-center justify-between gap-2">
+        <motion.div
+          className="relative w-[31%] rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-200/70"
+          initial={{ opacity: 0, x: -14 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="relative flex h-20 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-700 to-slate-950">
+            <Camera className="h-8 w-8 text-white" strokeWidth={1.5} />
+            {!shouldReduceMotion && (
+              <motion.span
+                className="absolute inset-x-0 top-0 h-0.5 bg-teal-300 shadow-[0_0_12px_#5eead4]"
+                animate={{ y: [0, 76, 0] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )}
           </div>
-          <FileText className="h-6 w-6 text-blue-600" />
-        </div>
-        <div className="space-y-2">
-          <div className="h-2 w-full rounded-full bg-blue-100" />
-          <div className="h-2 w-4/5 rounded-full bg-slate-100" />
-          <div className="h-2 w-3/5 rounded-full bg-slate-100" />
-        </div>
-        <div className="mt-5 flex items-end justify-between">
-          <div className="h-5 w-16 rounded-md bg-teal-100" />
-          <div className="h-3 w-14 rounded-full bg-slate-200" />
-        </div>
-      </motion.div>
+          <p className="mt-2 text-center text-[11px] font-bold text-slate-700">Prenez une photo</p>
+        </motion.div>
 
-      <motion.div
-        className="absolute bottom-[13%] right-[9%] w-[42%] rounded-2xl border border-teal-100 bg-white/95 p-3 shadow-xl shadow-teal-100/70"
-        initial={{ opacity: 0, y: 24, rotate: 7 }}
-        animate={shouldReduceMotion ? { opacity: 1, y: 0, rotate: 7 } : { opacity: 1, y: [0, -7, 0], rotate: 7 }}
-        transition={{
-          opacity: { duration: 0.8, delay: 0.25 },
-          y: { duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 },
-          rotate: { duration: 0.8, delay: 0.25 },
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <ReceiptText className="h-5 w-5 text-teal-600" />
-          <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-bold text-emerald-700">PAYÉ</span>
+        <div className="flex w-[16%] flex-col items-center gap-2">
+          <motion.div
+            className="grid h-9 w-9 place-items-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-200"
+            animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.12, 1] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <Sparkles className="h-4 w-4" />
+          </motion.div>
+          <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600">IA</span>
+          {!shouldReduceMotion && (
+            <motion.div
+              className="absolute h-1 w-12 rounded-full bg-gradient-to-r from-blue-300 to-teal-300"
+              animate={{ opacity: [0.25, 1, 0.25], scaleX: [0.6, 1, 0.6] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
         </div>
-        <div className="mt-3 h-2 w-4/5 rounded-full bg-slate-200" />
-        <div className="mt-2 h-2 w-3/5 rounded-full bg-slate-100" />
-        <div className="mt-4 h-7 rounded-lg bg-gradient-to-r from-blue-100 to-teal-100" />
-      </motion.div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={documentType}
+            className="w-[43%] rounded-2xl border border-teal-100 bg-white p-3 shadow-xl shadow-teal-100/70"
+            initial={{ opacity: 0, x: 14, rotate: 4 }}
+            animate={{ opacity: 1, x: 0, rotate: 4 }}
+            exit={{ opacity: 0, x: -8, rotate: 0 }}
+            transition={{ duration: 0.35 }}
+          >
+            <div className="flex items-center justify-between">
+              <ReceiptText className="h-5 w-5 text-teal-600" />
+              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-bold text-emerald-700">PRÊT</span>
+            </div>
+            <div className="mt-3 h-2 w-4/5 rounded-full bg-slate-200" />
+            <div className="mt-2 h-2 w-3/5 rounded-full bg-slate-100" />
+            <div className="mt-3 rounded-lg bg-gradient-to-r from-blue-100 to-teal-100 px-2 py-1.5 text-[10px] font-bold text-slate-700">
+              {documentType} généré
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <FileText className="h-4 w-4 text-blue-500" />
+              <Send className="h-4 w-4 text-teal-600" />
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {[{ left: '9%', top: '15%' }, { left: '82%', top: '54%' }, { left: '26%', top: '83%' }].map((dot, index) => (
         <motion.span
