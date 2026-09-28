@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Camera, Download, FileCheck2, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Download, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -10,9 +10,21 @@ interface AuthScreenProps {
 
 function BrandMark() {
   return (
-    <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#0d9488] text-white shadow-lg shadow-blue-200/60">
-      <FileCheck2 className="h-6 w-6" strokeWidth={2.2} />
-    </div>
+    <img
+      src="/branding/archifact-icon-dark.png"
+      alt=""
+      className="h-11 w-11 rounded-2xl object-cover shadow-lg shadow-blue-200/60"
+    />
+  );
+}
+
+function BrandLogo() {
+  return (
+    <img
+      src="/branding/archifact-horizontal.png"
+      alt="ArchiFact — devis et factures"
+      className="h-14 w-auto max-w-[290px] object-contain object-left"
+    />
   );
 }
 
@@ -202,10 +214,7 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
         >
           <section className="hidden flex-col justify-between bg-gradient-to-br from-[#eff6ff] via-white to-[#ecfeff] p-10 lg:flex xl:p-14">
             <div>
-              <div className="flex items-center gap-3">
-                <BrandMark />
-                <span className="text-2xl font-bold tracking-tight text-slate-950">ArchiFact</span>
-              </div>
+              <BrandLogo />
               <p className="mt-16 max-w-sm text-4xl font-bold leading-[1.08] tracking-[-0.04em] text-slate-950">
                 Vos devis.
                 <br />
