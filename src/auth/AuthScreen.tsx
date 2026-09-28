@@ -29,7 +29,7 @@ function ProductIllustration() {
   }, [shouldReduceMotion]);
 
   return (
-    <div className="relative mx-auto h-64 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 p-5 shadow-inner">
+    <div className="relative mx-auto h-52 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 p-4 shadow-inner sm:h-56 lg:h-64 lg:p-5">
       <div className="relative z-10 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
         <span>Photo → IA → document</span>
         <span className="rounded-full bg-white/80 px-2 py-1 text-blue-600 shadow-sm">en quelques secondes</span>
@@ -209,6 +209,9 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
               <div className="mb-10 flex items-center gap-3 lg:hidden">
                 <BrandMark />
                 <span className="text-2xl font-bold tracking-tight text-slate-950">ArchiFact</span>
+              </div>
+              <div className="mb-8 lg:hidden">
+                <ProductIllustration />
               </div>
 
               <AnimatePresence mode="wait">

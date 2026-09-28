@@ -8,7 +8,7 @@ Le CSS/Tailwind reste utilisé pour les transitions simples : couleurs de focus,
 
 ## Séquence de l’écran e-mail
 
-L’animation métier est affichée uniquement sur le panneau desktop (`lg` et plus). Sur mobile, le formulaire reste prioritaire afin de conserver une saisie rapide et lisible.
+L’animation métier est affichée sur desktop et sur mobile. Le panneau desktop utilise une version large ; le mobile affiche une version compacte au-dessus du formulaire afin de montrer immédiatement la promesse produit sans masquer la connexion.
 
 1. **Entrée de la carte** : fondu + déplacement vertical de 20 px, durée 600 ms, courbe `easeOut`.
 2. **Photo** : une carte sombre avec une icône caméra et une ligne de scan rappelle la prise de photo d’un besoin, article ou document.
