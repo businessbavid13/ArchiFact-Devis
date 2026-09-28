@@ -1,10 +1,12 @@
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import { AuthProvider, useAuth, AuthScreen } from './auth';
+import { AuthProvider, useAuth, AuthScreen, hasSeenOnboarding, OnboardingScreen } from './auth';
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 function AppContent() {
   const { user, isLoading, sendOtp, verifyOtp, signInWithGoogle } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
 
   // Loading spinner while checking auth state
   if (isLoading) {
@@ -16,6 +18,10 @@ function AppContent() {
         </div>
       </div>
     );
+  }
+
+  if (!user && showOnboarding) {
+    return <OnboardingScreen onFinish={() => setShowOnboarding(false)} />;
   }
 
   // Not logged in → show auth screen
