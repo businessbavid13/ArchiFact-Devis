@@ -42,7 +42,7 @@ function ProductIllustration() {
 
   return (
     <motion.div
-      className="relative mx-auto h-[290px] w-full max-w-[390px] overflow-hidden rounded-[1.5rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 shadow-inner sm:h-56 sm:rounded-[2rem] lg:h-64"
+      className="relative mx-auto h-[290px] w-full max-w-[390px] overflow-hidden sm:h-56 lg:h-64"
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
