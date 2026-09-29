@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { CreditPlan, PhotoScanExtract } from '../types';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 interface CreditWallet {
   plan: string;
