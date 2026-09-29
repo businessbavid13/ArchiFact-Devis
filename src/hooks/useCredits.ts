@@ -3,7 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { CreditPlan, PhotoScanExtract } from '../types';
 import { supabase } from '../lib/supabase';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 interface CreditWallet {
   plan: string;
