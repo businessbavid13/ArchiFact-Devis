@@ -62,7 +62,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <img
               src="/branding/archifact-horizontal.png"
               alt="ArchiFact"
-              className="h-8 w-auto max-w-[132px] object-contain object-left shrink-0"
+              className="h-8 w-auto max-w-[132px] object-contain object-left shrink-0 lg:hidden"
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2 leading-none">

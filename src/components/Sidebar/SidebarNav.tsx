@@ -1,16 +1,15 @@
 import React from 'react';
-import { FileText, FileSpreadsheet, Home, Package, Settings, Users } from 'lucide-react';
+import { FileText, FileSpreadsheet, Home, Package, Settings, ShieldCheck, Users } from 'lucide-react';
 import { TabType } from '../BottomTabs/BottomTabBar';
 
 interface SidebarNavProps {
   activeTab: TabType;
-  isHome: boolean;
   onNavigate: (path: string) => void;
 }
 
-export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, isHome, onNavigate }) => {
-  const items: Array<{ path: string; label: string; id?: TabType; icon: React.ComponentType<{ className?: string }> }> = [
-    { path: '/', label: 'Accueil', icon: Home },
+export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, onNavigate }) => {
+  const items: Array<{ path: string; label: string; id: TabType; icon: React.ComponentType<{ className?: string }> }> = [
+    { path: '/', label: 'Accueil', id: 'home', icon: Home },
     { path: '/invoices', label: 'Factures', id: 'invoices', icon: FileText },
     { path: '/quotes', label: 'Devis', id: 'quotes', icon: FileSpreadsheet },
     { path: '/clients', label: 'Clients', id: 'clients', icon: Users },
@@ -26,7 +25,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, isHome, onNav
       <nav className="flex-1 space-y-1 p-3" aria-label="Navigation principale">
         {items.map((item) => {
           const Icon = item.icon;
-          const isActive = item.id ? activeTab === item.id : isHome;
+          const isActive = activeTab === item.id;
           return (
             <button
               key={item.path}
@@ -45,6 +44,15 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, isHome, onNav
           );
         })}
       </nav>
+      <div className="m-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+          <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+          Espace sécurisé
+        </div>
+        <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+          Vos données sont réservées à votre compte et synchronisées automatiquement.
+        </p>
+      </div>
     </aside>
   );
 };
