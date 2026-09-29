@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { X, Sparkles, Check, CreditCard, Smartphone, CheckCircle, ShieldCheck, ArrowRight, Loader2, AlertCircle, RefreshCw, History } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Sparkles, Check, CheckCircle, ShieldCheck, ArrowRight, Loader2, AlertCircle, RefreshCw, History, X, Clock } from 'lucide-react';
 import { Button } from '../Button/Button';
 import { CreditPlan } from '../../types';
 import { formatCurrency } from '../../utils/formatting';
 import { DialogPanel } from '../Dialog/DialogPanel';
 import { AnimatedNumber } from '../AnimatedNumber/AnimatedNumber';
-import type { CreditTransaction } from '../../hooks/useCredits';
+import { AI_CREDIT_COSTS } from '../../constants/aiCosts';
+import type { CreditTransaction, PaymentStatus } from '../../hooks/useCredits';
 
 const TRANSACTION_LABELS: Record<CreditTransaction['type'], string> = {
   PURCHASE: 'Achat de crédits',
@@ -15,6 +16,15 @@ const TRANSACTION_LABELS: Record<CreditTransaction['type'], string> = {
   ADJUSTMENT: 'Ajustement',
 };
 
+export const PENDING_PAYMENT_STORAGE_KEY = 'archifact.pendingPaymentReference';
+const PAYMENT_POLL_INTERVAL_MS = 3000;
+const PAYMENT_POLL_ATTEMPTS = 20;
+
+export interface PaymentReturn {
+  outcome: 'success' | 'failed';
+  reference: string | null;
+}
+
 interface CreditsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,13 +32,17 @@ interface CreditsModalProps {
   plans: CreditPlan[];
   isLoading: boolean;
   loadError: string | null;
-  onCreatePayment: (planId: string, paymentMethod: string, phoneNumber: string) => Promise<{ reference: string }>;
+  onCreatePayment: (planId: string) => Promise<{ reference: string; checkoutUrl: string | null }>;
+  onCheckPayment: (reference: string) => Promise<{ status: PaymentStatus }>;
+  paymentReturn: PaymentReturn | null;
   onRefreshCredits: () => Promise<void>;
   transactions: CreditTransaction[];
   transactionsLoading: boolean;
   transactionsError: string | null;
   onLoadTransactions: () => Promise<void>;
 }
+
+type ReturnState = 'checking' | 'confirmed' | 'pending' | 'failed';
 
 export const CreditsModal: React.FC<CreditsModalProps> = ({
   isOpen,
@@ -38,27 +52,70 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
   isLoading,
   loadError,
   onCreatePayment,
+  onCheckPayment,
+  paymentReturn,
   onRefreshCredits,
   transactions,
   transactionsLoading,
   transactionsError,
   onLoadTransactions,
 }) => {
+  const purchasablePlans = plans.filter((plan) => plan.priceFcfa > 0);
   const [selectedPlan, setSelectedPlan] = useState<CreditPlan | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'wave' | 'orange_money' | 'mtn_momo' | 'card'>('wave');
-  const [phoneNumber, setPhoneNumber] = useState('07 00 00 00 00');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [successResult, setSuccessResult] = useState<{ credits: number; tx: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [returnState, setReturnState] = useState<ReturnState | null>(
+    paymentReturn ? (paymentReturn.outcome === 'failed' ? 'failed' : 'checking') : null
+  );
+  const checkPaymentRef = useRef(onCheckPayment);
+  checkPaymentRef.current = onCheckPayment;
 
   useEffect(() => {
-    if (!selectedPlan && plans.length > 0) setSelectedPlan(plans[0]);
-  }, [plans, selectedPlan]);
+    if (!selectedPlan && purchasablePlans.length > 0) setSelectedPlan(purchasablePlans[0]);
+  }, [purchasablePlans, selectedPlan]);
 
   useEffect(() => {
     if (isOpen) void onLoadTransactions();
   }, [isOpen, onLoadTransactions]);
+
+  useEffect(() => {
+    if (!paymentReturn) return;
+    const reference = sessionStorage.getItem(PENDING_PAYMENT_STORAGE_KEY) || paymentReturn.reference;
+    if (paymentReturn.outcome === 'failed' || !reference) {
+      setReturnState(paymentReturn.outcome === 'failed' ? 'failed' : 'pending');
+      return;
+    }
+    let cancelled = false;
+    let attempts = 0;
+    let timer: number | undefined;
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const { status } = await checkPaymentRef.current(reference);
+        if (cancelled) return;
+        if (status === 'CONFIRMED' || status === 'FAILED') {
+          sessionStorage.removeItem(PENDING_PAYMENT_STORAGE_KEY);
+          setReturnState(status === 'CONFIRMED' ? 'confirmed' : 'failed');
+          void onLoadTransactions();
+          return;
+        }
+      } catch {
+        if (cancelled) return;
+      }
+      if (attempts >= PAYMENT_POLL_ATTEMPTS) {
+        setReturnState('pending');
+        return;
+      }
+      timer = window.setTimeout(poll, PAYMENT_POLL_INTERVAL_MS);
+    };
+    setReturnState('checking');
+    void poll();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [paymentReturn, onLoadTransactions]);
 
   if (!isOpen) return null;
 
@@ -76,20 +133,43 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
     setErrorMessage(null);
     try {
       if (!selectedPlan) throw new Error('Aucun forfait disponible');
-      const res = await onCreatePayment(selectedPlan.id, paymentMethod, phoneNumber);
-      setSuccessResult({ credits: selectedPlan.credits, tx: res.reference });
+      const { reference, checkoutUrl } = await onCreatePayment(selectedPlan.id);
+      if (!checkoutUrl) throw new Error('GeniusPay n’a pas renvoyé de page de paiement. Réessayez.');
+      sessionStorage.setItem(PENDING_PAYMENT_STORAGE_KEY, reference);
+      window.location.assign(checkoutUrl);
     } catch (error) {
-      setSuccessResult(null);
       setErrorMessage(error instanceof Error ? error.message : 'Paiement indisponible');
-    } finally {
       setIsProcessing(false);
     }
   };
 
   const handleCloseAll = () => {
-    setSuccessResult(null);
+    setReturnState(null);
     setErrorMessage(null);
     onClose();
+  };
+
+  const returnContent: Record<ReturnState, { icon: React.ReactNode; title: string; text: string }> = {
+    checking: {
+      icon: <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />,
+      title: 'Vérification du paiement…',
+      text: 'Nous attendons la confirmation officielle de GeniusPay.',
+    },
+    confirmed: {
+      icon: <CheckCircle className="h-8 w-8 text-emerald-600" aria-hidden="true" />,
+      title: 'Paiement confirmé',
+      text: 'Vos crédits ont été ajoutés à votre solde.',
+    },
+    pending: {
+      icon: <Clock className="h-8 w-8" aria-hidden="true" />,
+      title: 'Paiement en cours de traitement',
+      text: 'Vos crédits seront ajoutés dès que GeniusPay confirmera le paiement. Vous pouvez actualiser dans quelques instants.',
+    },
+    failed: {
+      icon: <AlertCircle className="h-8 w-8 text-rose-600" aria-hidden="true" />,
+      title: 'Paiement non abouti',
+      text: 'Aucun montant n’a été crédité. Vous pouvez choisir un forfait et réessayer.',
+    },
   };
 
   return (
@@ -117,21 +197,16 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
 
         {/* Content */}
         <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain flex-1 space-y-4">
-          {successResult ? (
-            <div className="text-center py-6 space-y-4">
+          {returnState ? (
+            <div className="text-center py-6 space-y-4" role="status" aria-live="polite">
               <div className="w-14 h-14 bg-slate-100 text-slate-900 rounded-full flex items-center justify-center mx-auto border border-slate-200">
-                <CheckCircle className="w-8 h-8" />
+                {returnContent[returnState].icon}
               </div>
               <div>
                 <h4 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
-                  Paiement initié
+                  {returnContent[returnState].title}
                 </h4>
-                <p className="text-xs text-slate-500 mt-1 font-mono">
-                  Réf. #{successResult.tx}
-                </p>
-                <div className="mt-3 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-md text-xs font-normal leading-relaxed">
-                  Les crédits seront ajoutés après confirmation sécurisée du webhook GeniusPay.
-                </div>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">{returnContent[returnState].text}</p>
                 <div className="mt-3 flex items-center justify-between rounded-md bg-slate-900 p-3 text-white">
                   <div className="text-left">
                     <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Solde</span>
@@ -151,18 +226,19 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                   </button>
                 </div>
               </div>
-              <Button
-                variant="primary"
-                size="md"
-                fullWidth
-                onClick={handleCloseAll}
-              >
-                Continuer
-              </Button>
+              <div className="flex gap-2">
+                {returnState === 'failed' && (
+                  <Button variant="outline" size="md" fullWidth onClick={() => setReturnState(null)}>
+                    Voir les forfaits
+                  </Button>
+                )}
+                <Button variant="primary" size="md" fullWidth onClick={handleCloseAll}>
+                  Continuer
+                </Button>
+              </div>
             </div>
           ) : (
             <>
-              {/* Current balance card */}
               <div className="bg-slate-900 text-white p-4 rounded-lg flex items-center justify-between">
                 <div>
                   <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
@@ -174,17 +250,16 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                   </div>
                 </div>
                 <div className="text-right text-[11px] text-slate-400 leading-snug">
-                  <p>Le coût dépend de l'opération IA</p>
-                  <p className="text-slate-500">Le scan OCR coûte 100 crédits</p>
+                  <p>Photo → Devis : {AI_CREDIT_COSTS.AI_QUOTE_FROM_IMAGE} crédits</p>
+                  <p className="text-slate-500">Photo → Article : {AI_CREDIT_COSTS.AI_ARTICLE_FROM_IMAGE} crédit</p>
                 </div>
               </div>
 
-              {/* Offers list */}
-              <div className="space-y-2">
+              <div className="space-y-2" role="radiogroup" aria-labelledby="credit-plans-title">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold tracking-tight text-slate-900 uppercase">
+                  <h4 id="credit-plans-title" className="text-xs font-semibold tracking-tight text-slate-900 uppercase">
                     Choisir un forfait
-                  </label>
+                  </h4>
                   <span className="text-[11px] text-slate-500 font-normal">Sans abonnement</span>
                 </div>
 
@@ -199,132 +274,59 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-600">
                     Chargement des forfaits...
                   </div>
-                ) : plans.length === 0 ? (
+                ) : purchasablePlans.length === 0 ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-600">
                     Impossible de charger les forfaits pour le moment. Réessayez dans quelques instants.
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {plans.map((offer) => {
-                    const isSelected = selectedPlan?.id === offer.id;
-                    return (
-                      <div
-                        key={offer.id}
-                        onClick={() => setSelectedPlan(offer)}
-                        className={`relative p-3.5 rounded-lg border transition-all duration-200 ease-out active:scale-[0.99] cursor-pointer flex items-center justify-between min-h-[56px] ${
-                          isSelected
-                            ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900 shadow-xs'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-150 ${
-                              isSelected
-                                ? 'border-slate-900 bg-slate-900 text-white'
-                                : 'border-slate-300 bg-white'
-                            }`}
-                          >
-                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                    {purchasablePlans.map((offer) => {
+                      const isSelected = selectedPlan?.id === offer.id;
+                      return (
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          key={offer.id}
+                          onClick={() => setSelectedPlan(offer)}
+                          className={`relative w-full p-3.5 rounded-lg border text-left transition-all duration-200 ease-out active:scale-[0.99] cursor-pointer flex items-center justify-between min-h-[56px] ${
+                            isSelected
+                              ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900 shadow-xs'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-150 ${
+                                isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white'
+                              }`}
+                            >
+                              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold tracking-tight text-slate-900">
+                                {offer.name} · {offer.credits} crédits
+                              </p>
+                              <p className="text-xs text-slate-500 font-normal">
+                                Soit {Math.round(offer.priceFcfa / offer.credits)} FCFA / crédit
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold tracking-tight text-slate-900">
-                              {offer.credits} crédits
-                            </p>
-                            <p className="text-xs text-slate-500 font-normal">
-                              Soit {Math.round(offer.priceFcfa / offer.credits)} FCFA / scan
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
                           <span className="text-sm font-bold font-mono tracking-tight text-slate-900">
                             {formatCurrency(offer.priceFcfa)}
                           </span>
-                        </div>
-                      </div>
-                    );
+                        </button>
+                      );
                     })}
                   </div>
                 )}
               </div>
 
-              {/* Payment methods */}
-              <div className="space-y-2 pt-1">
-                <label className="text-xs font-semibold tracking-tight text-slate-900 uppercase">
-                  Moyen de paiement GeniusPay
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('wave')}
-                    className={`min-h-[44px] px-3 py-2 rounded-md border text-xs font-medium flex items-center gap-2 transition-all duration-150 ease-out active:scale-95 cursor-pointer ${
-                      paymentMethod === 'wave'
-                        ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
-                        : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <Smartphone className="w-4 h-4 shrink-0" />
-                    <span className="truncate">Wave Mobile</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('orange_money')}
-                    className={`min-h-[44px] px-3 py-2 rounded-md border text-xs font-medium flex items-center gap-2 transition-all duration-150 ease-out active:scale-95 cursor-pointer ${
-                      paymentMethod === 'orange_money'
-                        ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
-                        : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <Smartphone className="w-4 h-4 shrink-0" />
-                    <span className="truncate">Orange Money</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('mtn_momo')}
-                    className={`min-h-[44px] px-3 py-2 rounded-md border text-xs font-medium flex items-center gap-2 transition-all duration-150 ease-out active:scale-95 cursor-pointer ${
-                      paymentMethod === 'mtn_momo'
-                        ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
-                        : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <Smartphone className="w-4 h-4 shrink-0" />
-                    <span className="truncate">MTN MoMo</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('card')}
-                    className={`min-h-[44px] px-3 py-2 rounded-md border text-xs font-medium flex items-center gap-2 transition-all duration-150 ease-out active:scale-95 cursor-pointer ${
-                      paymentMethod === 'card'
-                        ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
-                        : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <CreditCard className="w-4 h-4 shrink-0" />
-                    <span className="truncate">Carte Bancaire</span>
-                  </button>
-                </div>
-
-                <div className="pt-1 space-y-1">
-                  <label className="text-xs font-medium text-slate-600 block">
-                    Numéro mobile ou identifiant
-                  </label>
-                  <input
-                    type="text"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full min-h-[44px] bg-white border border-slate-200 rounded-md px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
-                    placeholder="Ex: 07 00 00 00 00"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 pt-1">
+              <div className="flex items-start gap-1.5 text-xs text-slate-500 pt-1">
                 <ShieldCheck className="w-4 h-4 text-slate-700 flex-shrink-0" />
-                <span>Paiement sécurisé et instantané • Aucun engagement</span>
+                <span>
+                  Vous serez redirigé vers la page de paiement sécurisée GeniusPay pour choisir Wave, Orange Money, MTN MoMo, Moov ou carte bancaire.
+                </span>
               </div>
 
               <section aria-labelledby="credit-history-title" className="space-y-2 pt-2">
@@ -369,16 +371,9 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
-        {!successResult && (
+        {!returnState && (
           <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="md"
-              fullWidth
-              onClick={handleCloseAll}
-              disabled={isProcessing}
-            >
+            <Button variant="outline" size="md" fullWidth onClick={handleCloseAll} disabled={isProcessing}>
               Annuler
             </Button>
             <Button
@@ -386,16 +381,16 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
               size="md"
               fullWidth
               onClick={handleConfirmPurchase}
-              disabled={isProcessing || isLoading || !selectedPlan || plans.length === 0}
+              disabled={isProcessing || isLoading || !selectedPlan || purchasablePlans.length === 0}
               icon={isProcessing ? undefined : ArrowRight}
             >
               {isProcessing ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Traitement...
+                  Redirection...
                 </span>
               ) : (
-                selectedPlan ? `Acheter (${formatCurrency(selectedPlan.priceFcfa)})` : 'Choisir un forfait'
+                selectedPlan ? `Payer ${formatCurrency(selectedPlan.priceFcfa)}` : 'Choisir un forfait'
               )}
             </Button>
           </div>

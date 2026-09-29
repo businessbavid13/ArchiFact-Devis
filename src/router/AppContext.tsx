@@ -43,6 +43,7 @@ interface AppContextType {
   completeCreditReservation: ReturnType<typeof useCredits>['completeReservation'];
   refundCreditReservation: ReturnType<typeof useCredits>['refundReservation'];
   createPayment: ReturnType<typeof useCredits>['createPayment'];
+  checkPayment: ReturnType<typeof useCredits>['checkPayment'];
   analyzeImages: ReturnType<typeof useCredits>['analyzeImages'];
   refreshCredits: ReturnType<typeof useCredits>['refresh'];
   creditTransactions: ReturnType<typeof useCredits>['transactions'];
@@ -222,6 +223,7 @@ export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }
     completeCreditReservation: creditsHook.completeReservation,
     refundCreditReservation: creditsHook.refundReservation,
     createPayment: creditsHook.createPayment,
+    checkPayment: creditsHook.checkPayment,
     analyzeImages: creditsHook.analyzeImages,
     refreshCredits: creditsHook.refresh,
     creditTransactions: creditsHook.transactions,

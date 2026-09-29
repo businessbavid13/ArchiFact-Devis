@@ -7,6 +7,7 @@ import { BottomTabBar, TabType } from '../components/BottomTabs/BottomTabBar';
 import { SidebarNav } from '../components/Sidebar/SidebarNav';
 import { AppProvider, useAppContext } from './AppContext';
 import { Invoice, Quote } from '../types';
+import type { PaymentReturn } from '../components/CreditsModal/CreditsModal';
 
 const PhotoScanModal = lazy(() =>
   import('../components/PhotoScanModal/PhotoScanModal').then(({ PhotoScanModal }) => ({ default: PhotoScanModal }))
@@ -57,6 +58,17 @@ function AppLayoutInner() {
     ctx.setIsCreditsModalOpen(false);
     ctx.setPreviewData(null);
   }, [location.pathname]);
+
+  const [paymentReturn, setPaymentReturn] = useState<PaymentReturn | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const outcome = params.get('payment');
+    if (outcome !== 'success' && outcome !== 'failed') return;
+    setPaymentReturn({ outcome, reference: params.get('reference') });
+    ctx.setIsCreditsModalOpen(true);
+    navigate({ pathname: location.pathname, search: '' }, { replace: true });
+  }, [location.search]);
 
   const handleTabChange = (tab: TabType) => {
     navigate(tabToPath(tab));
@@ -183,12 +195,17 @@ function AppLayoutInner() {
         {ctx.isCreditsModalOpen && (
         <CreditsModal
           isOpen={ctx.isCreditsModalOpen}
-          onClose={() => ctx.setIsCreditsModalOpen(false)}
+          onClose={() => {
+            setPaymentReturn(null);
+            ctx.setIsCreditsModalOpen(false);
+          }}
           currentCredits={ctx.credits}
           plans={ctx.creditPlans}
           isLoading={ctx.creditsLoading}
           loadError={ctx.creditsError}
           onCreatePayment={ctx.createPayment}
+          onCheckPayment={ctx.checkPayment}
+          paymentReturn={paymentReturn}
           onRefreshCredits={ctx.refreshCredits}
           transactions={ctx.creditTransactions}
           transactionsLoading={ctx.creditTransactionsLoading}

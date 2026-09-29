@@ -201,6 +201,8 @@ function isImageInput(value: unknown): value is ImageInput {
     acceptedImageMimeTypes.has(image.mimeType);
 }
 
+const GENIUSPAY_MIN_AMOUNT_FCFA = 200;
+
 function isValidPhoneNumber(value: unknown): value is string {
   return typeof value === 'string' && /^[0-9+()\s.-]{7,24}$/.test(value);
 }
@@ -390,15 +392,14 @@ app.post('/api/payments/geniuspay/create', requireAuth, paymentRateLimiter, asyn
     };
     const acceptedPaymentMethods = new Set(['wave', 'orange_money', 'mtn_momo', 'card']);
     if (!isBoundedString(planId, 80) ||
-      typeof paymentMethod !== 'string' ||
-      !acceptedPaymentMethods.has(paymentMethod) ||
-      !isValidPhoneNumber(phoneNumber)) {
+      (paymentMethod !== undefined && (typeof paymentMethod !== 'string' || !acceptedPaymentMethods.has(paymentMethod))) ||
+      (phoneNumber !== undefined && !isValidPhoneNumber(phoneNumber))) {
       res.status(400).json({ error: 'Invalid payment details' });
       return;
     }
     const plans = await getCreditPlans();
     const plan = plans.find((item) => item.id === planId);
-    if (!plan) {
+    if (!plan || plan.price_fcfa < GENIUSPAY_MIN_AMOUNT_FCFA) {
       res.status(400).json({ error: 'Unknown plan' });
       return;
     }
@@ -411,6 +412,8 @@ app.post('/api/payments/geniuspay/create', requireAuth, paymentRateLimiter, asyn
     }
     const reference = `ARCHI_${crypto.randomUUID()}`;
     const providerPaymentMethod = paymentMethod === 'mtn_momo' ? 'mtn_money' : paymentMethod;
+    const returnUrl = (status: 'success' | 'failed') =>
+      appUrl ? `${appUrl.replace(/\/$/, '')}/#/?payment=${status}&reference=${encodeURIComponent(reference)}` : undefined;
     const appUrl = process.env.APP_URL || process.env.VITE_AUTH_REDIRECT_URL;
     const { error: insertError } = await adminSupabase.from('payment_transactions').insert({
       user_id: getAuthenticatedUser(req).id,
@@ -433,11 +436,9 @@ app.post('/api/payments/geniuspay/create', requireAuth, paymentRateLimiter, asyn
         currency: 'XOF',
         payment_method: providerPaymentMethod,
         description: `Crédits IA ArchiFact — ${plan.name}`,
-        customer: {
-          phone: phoneNumber,
-        },
-        success_url: appUrl ? `${appUrl}/settings?payment=success&reference=${encodeURIComponent(reference)}` : undefined,
-        error_url: appUrl ? `${appUrl}/settings?payment=failed&reference=${encodeURIComponent(reference)}` : undefined,
+        customer: phoneNumber ? { phone: phoneNumber } : undefined,
+        success_url: returnUrl('success'),
+        error_url: returnUrl('failed'),
         metadata: {
           order_id: reference,
           plan_id: plan.id,
@@ -473,6 +474,70 @@ app.post('/api/payments/geniuspay/create', requireAuth, paymentRateLimiter, asyn
     console.error('Error creating GeniusPay payment:', error instanceof Error ? error.message : 'unknown error');
     void writeSecurityAudit({ req, eventType: 'payment.create_failed', success: false });
     res.status(creditErrorStatus(error)).json({ error: 'Unable to initialize payment' });
+  }
+});
+
+app.get('/api/payments/geniuspay/:reference', requireAuth, authenticatedRateLimiter, async (req: Request, res: Response) => {
+  try {
+    if (!adminSupabase) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+    const reference = req.params.reference;
+    if (!isBoundedString(reference, 120)) {
+      res.status(400).json({ error: 'Invalid payment reference' });
+      return;
+    }
+    const userId = getAuthenticatedUser(req).id;
+    const { data: payment, error } = await adminSupabase
+      .from('payment_transactions')
+      .select('provider_reference, plan_id, amount_fcfa, status')
+      .eq('provider_reference', reference)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!payment) {
+      res.status(404).json({ error: 'Payment not found' });
+      return;
+    }
+    if (payment.status !== 'PENDING') {
+      res.json({ reference, status: payment.status });
+      return;
+    }
+    const providerApiKey = process.env.GENIUSPAY_API_KEY;
+    const providerApiSecret = process.env.GENIUSPAY_API_SECRET;
+    if (!providerApiKey || !providerApiSecret) {
+      res.json({ reference, status: payment.status });
+      return;
+    }
+    const providerUrl = process.env.GENIUSPAY_API_URL || 'https://geniuspay.ci/api/v1/merchant/payments';
+    const providerResponse = await fetch(`${providerUrl}/${encodeURIComponent(reference)}`, {
+      headers: { 'X-API-Key': providerApiKey, 'X-API-Secret': providerApiSecret },
+    });
+    if (!providerResponse.ok) {
+      res.json({ reference, status: payment.status });
+      return;
+    }
+    const providerPayload = await providerResponse.json() as {
+      data?: { status?: string; amount?: number; metadata?: { user_id?: string; plan_id?: string } };
+    };
+    const providerData = providerPayload.data;
+    const providerStatus = String(providerData?.status || '').toLowerCase();
+    const isVerifiedCompletion = providerStatus === 'completed' &&
+      Number(providerData?.amount) === payment.amount_fcfa &&
+      providerData?.metadata?.user_id === userId &&
+      providerData?.metadata?.plan_id === payment.plan_id;
+    if (isVerifiedCompletion) {
+      const { error: confirmError } = await adminSupabase.rpc('confirm_geniuspay_payment', {
+        p_provider_reference: reference,
+      });
+      if (confirmError) throw confirmError;
+      void writeSecurityAudit({ req, eventType: 'payment.status_confirmed', metadata: { provider: 'geniuspay' } });
+      res.json({ reference, status: 'CONFIRMED' });
+      return;
+    }
+    const failedStatuses = new Set(['failed', 'cancelled', 'expired']);
+    res.json({ reference, status: failedStatuses.has(providerStatus) ? 'FAILED' : payment.status });
+  } catch (error) {
+    console.error('Error checking GeniusPay payment:', error instanceof Error ? error.message : 'unknown error');
+    res.status(creditErrorStatus(error)).json({ error: 'Unable to check payment' });
   }
 });
 

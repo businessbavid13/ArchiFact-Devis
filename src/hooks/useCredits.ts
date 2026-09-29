@@ -11,6 +11,8 @@ interface CreditWallet {
   credits_balance: number;
 }
 
+export type PaymentStatus = 'PENDING' | 'CONFIRMED' | 'FAILED';
+
 export interface CreditTransaction {
   id: string;
   amount: number;
@@ -137,17 +139,23 @@ export function useCredits(session: Session | null) {
     await refresh();
   }, [refresh, session]);
 
-  const createPayment = useCallback(async (
-    planId: string,
-    paymentMethod: string,
-    phoneNumber: string
-  ) => {
+  const createPayment = useCallback(async (planId: string) => {
     if (!session) throw new Error('Session utilisateur absente');
-    return apiRequest<{ reference: string; provider: unknown }>(session, '/api/payments/geniuspay/create', {
+    return apiRequest<{ reference: string; checkoutUrl: string | null }>(session, '/api/payments/geniuspay/create', {
       method: 'POST',
-      body: JSON.stringify({ planId, paymentMethod, phoneNumber }),
+      body: JSON.stringify({ planId }),
     });
   }, [session]);
+
+  const checkPayment = useCallback(async (reference: string) => {
+    if (!session) throw new Error('Session utilisateur absente');
+    const result = await apiRequest<{ reference: string; status: PaymentStatus }>(
+      session,
+      `/api/payments/geniuspay/${encodeURIComponent(reference)}`
+    );
+    if (result.status === 'CONFIRMED') await refresh();
+    return result;
+  }, [refresh, session]);
 
   const analyzeImages = useCallback(async (files: File[]): Promise<PhotoScanExtract> => {
     if (!session) throw new Error('Session utilisateur absente');
@@ -184,6 +192,7 @@ export function useCredits(session: Session | null) {
     completeReservation,
     refundReservation,
     createPayment,
+    checkPayment,
     analyzeImages,
   };
 }

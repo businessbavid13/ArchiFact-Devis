@@ -27,6 +27,16 @@ const mocks = vi.hoisted(() => {
     update: vi.fn(() => ({
       eq: vi.fn(async () => ({ error: null })),
     })),
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn(async () => ({
+            data: { provider_reference: 'GP-TEST-001', plan_id: 'starter', amount_fcfa: 1000, status: 'PENDING' },
+            error: null,
+          })),
+        })),
+      })),
+    })),
   };
 
   return {
@@ -199,6 +209,84 @@ describe('backend payment and AI credit E2E', () => {
         }),
       }),
     );
+  });
+
+  it('creates a hosted GeniusPay checkout when no payment method is chosen', async () => {
+    process.env.GENIUSPAY_API_KEY = 'pk_test';
+    process.env.GENIUSPAY_API_SECRET = 'sk_test';
+    process.env.APP_URL = 'https://archi-fact-devis.vercel.app';
+
+    const response = await request(
+      server,
+      'POST',
+      '/api/payments/geniuspay/create',
+      JSON.stringify({ planId: 'starter' }),
+      { authorization: 'Bearer valid-token' },
+    );
+
+    expect(response.status).toBe(201);
+    expect(JSON.parse(response.body).checkoutUrl).toBe('https://geniuspay.ci/checkout/GP-TEST-001');
+    const [, init] = vi.mocked(globalThis.fetch).mock.calls[0];
+    const providerBody = JSON.parse(String(init?.body));
+    expect(providerBody.payment_method).toBeUndefined();
+    expect(providerBody.amount).toBe(1000);
+    expect(providerBody.success_url).toMatch(/^https:\/\/archi-fact-devis\.vercel\.app\/#\/\?payment=success&reference=/);
+  });
+
+  it('confirms a payment after verifying it with the GeniusPay API', async () => {
+    process.env.GENIUSPAY_API_KEY = 'pk_test';
+    process.env.GENIUSPAY_API_SECRET = 'sk_test';
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          status: 'completed',
+          amount: 1000,
+          metadata: { user_id: '33333333-3333-4333-8333-333333333333', plan_id: 'starter' },
+        },
+      }),
+    } as Response);
+
+    const response = await request(
+      server,
+      'GET',
+      '/api/payments/geniuspay/GP-TEST-001',
+      undefined,
+      { authorization: 'Bearer valid-token' },
+    );
+
+    expect(response.status).toBe(200);
+    expect(JSON.parse(response.body).status).toBe('CONFIRMED');
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/GP-TEST-001$/),
+      expect.objectContaining({ headers: expect.objectContaining({ 'X-API-Secret': 'sk_test' }) }),
+    );
+    expect(mocks.rpc).toHaveBeenCalledWith('confirm_geniuspay_payment', { p_provider_reference: 'GP-TEST-001' });
+  });
+
+  it('does not confirm a payment whose amount does not match', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          status: 'completed',
+          amount: 200,
+          metadata: { user_id: '33333333-3333-4333-8333-333333333333', plan_id: 'starter' },
+        },
+      }),
+    } as Response);
+
+    const response = await request(
+      server,
+      'GET',
+      '/api/payments/geniuspay/GP-TEST-001',
+      undefined,
+      { authorization: 'Bearer valid-token' },
+    );
+
+    expect(JSON.parse(response.body).status).toBe('PENDING');
+    expect(mocks.rpc).not.toHaveBeenCalledWith('confirm_geniuspay_payment', expect.anything());
   });
 
   it('accepts a signed current GeniusPay success webhook', async () => {
