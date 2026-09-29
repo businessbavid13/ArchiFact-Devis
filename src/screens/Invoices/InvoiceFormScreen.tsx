@@ -216,9 +216,9 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
           <button
             type="button"
             onClick={onOpenPhotoScan}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-slate-600 border border-blue-200 rounded-md text-xs font-bold transition-all "
+            className="flex min-h-9 items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-semibold transition-all"
           >
-            <Camera className="w-3.5 h-3.5" />
+            <Camera className="w-3.5 h-3.5 text-blue-600" />
             <span>Scanner photo</span>
           </button>
         </div>
@@ -344,7 +344,7 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setIsVoiceDictationOpen(true)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-md text-xs font-bold active:scale-95 transition-all "
+                className="flex min-h-9 items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-semibold active:scale-95 transition-all"
                 title="Dictée Vocale Rapide Chantier"
               >
                 <Mic className="w-3.5 h-3.5" />
@@ -353,7 +353,7 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setIsArticlePickerOpen(true)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-md text-xs font-bold active:scale-95 transition-all "
+                className="flex min-h-9 items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold active:scale-95 transition-all"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Ajouter</span>

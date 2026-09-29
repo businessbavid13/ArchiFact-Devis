@@ -1,7 +1,7 @@
 import React from 'react';
-import { FileText, FileSpreadsheet, Users, Package, Settings } from 'lucide-react';
+import { FileText, FileSpreadsheet, Home, Users, Package, Settings } from 'lucide-react';
 
-export type TabType = 'invoices' | 'quotes' | 'clients' | 'articles' | 'settings';
+export type TabType = 'home' | 'invoices' | 'quotes' | 'clients' | 'articles' | 'settings';
 
 interface BottomTabBarProps {
   activeTab?: TabType;
@@ -16,9 +16,14 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
   currentTab,
   onTabChange,
 }) => {
-  const current = activeTab || currentTab || 'invoices';
+  const current = activeTab || currentTab || 'home';
 
   const tabs: Array<{ id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+    {
+      id: 'home',
+      label: 'Accueil',
+      icon: Home,
+    },
     {
       id: 'invoices',
       label: 'Factures',
@@ -41,7 +46,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
     },
     {
       id: 'settings',
-      label: 'Paramètres',
+      label: 'Réglages',
       icon: Settings,
     },
   ];

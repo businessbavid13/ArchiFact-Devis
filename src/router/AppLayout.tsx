@@ -27,7 +27,8 @@ function pathToTab(pathname: string): TabType {
   if (pathname.startsWith('/articles')) return 'articles';
   if (pathname.startsWith('/clients')) return 'clients';
   if (pathname.startsWith('/settings')) return 'settings';
-  return 'invoices'; // default & /invoices
+  if (pathname.startsWith('/invoices')) return 'invoices';
+  return 'home';
 }
 
 /**
@@ -35,6 +36,7 @@ function pathToTab(pathname: string): TabType {
  */
 function tabToPath(tab: TabType): string {
   switch (tab) {
+    case 'home': return '/';
     case 'invoices': return '/invoices';
     case 'quotes': return '/quotes';
     case 'articles': return '/articles';
@@ -107,6 +109,8 @@ function AppLayoutInner() {
     }
 
     switch (activeTab) {
+      case 'home':
+        return { title: 'Accueil' };
       case 'invoices':
         return {
           title: 'Factures',
@@ -138,14 +142,13 @@ function AppLayoutInner() {
   const headerProps = getHeaderProps();
 
   return (
-    <div className="min-h-[100dvh] bg-slate-900 flex items-center justify-center p-0 sm:p-4 select-none font-sans text-slate-800">
-      <div className="w-full min-h-[100dvh] bg-white shadow-2xl overflow-hidden flex flex-col relative sm:max-w-[560px] sm:min-h-0 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:max-w-none lg:h-[calc(100dvh-2rem)] lg:rounded-none lg:overflow-visible">
+    <div className="min-h-[100dvh] bg-slate-900 flex items-center justify-center p-0 sm:p-4 lg:p-0 select-none font-sans text-slate-800">
+      <div className="w-full min-h-[100dvh] bg-white shadow-2xl overflow-hidden flex flex-col relative sm:max-w-[560px] sm:min-h-0 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:max-w-none lg:h-[100dvh] lg:rounded-none lg:shadow-none lg:overflow-visible">
         <MobileStatusBar />
 
         <div className="flex min-h-0 flex-1">
           <SidebarNav
             activeTab={activeTab}
-            isHome={location.pathname === '/'}
             onNavigate={navigate}
           />
           <div className="flex min-w-0 flex-1 flex-col">
