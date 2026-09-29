@@ -3,14 +3,15 @@ import { useReducedMotion } from 'motion/react';
 
 interface AnimatedNumberProps {
   value: number;
+  initialValue?: number;
   className?: string;
 }
 
-export function AnimatedNumber({ value, className }: AnimatedNumberProps) {
+export function AnimatedNumber({ value, initialValue, className }: AnimatedNumberProps) {
   const shouldReduceMotion = useReducedMotion();
-  const [displayed, setDisplayed] = useState(value);
+  const [displayed, setDisplayed] = useState(initialValue ?? value);
   const [isHighlighted, setIsHighlighted] = useState(false);
-  const previousRef = useRef(value);
+  const previousRef = useRef(initialValue ?? value);
 
   useEffect(() => {
     const from = previousRef.current;

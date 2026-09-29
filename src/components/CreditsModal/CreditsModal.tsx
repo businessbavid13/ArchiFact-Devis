@@ -17,6 +17,7 @@ const TRANSACTION_LABELS: Record<CreditTransaction['type'], string> = {
 };
 
 export const PENDING_PAYMENT_STORAGE_KEY = 'archifact.pendingPaymentReference';
+const BALANCE_BEFORE_PAYMENT_STORAGE_KEY = 'archifact.balanceBeforePayment';
 const PAYMENT_POLL_INTERVAL_MS = 3000;
 const PAYMENT_POLL_ATTEMPTS = 20;
 
@@ -68,12 +69,24 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
   const [returnState, setReturnState] = useState<ReturnState | null>(
     paymentReturn ? (paymentReturn.outcome === 'failed' ? 'failed' : 'checking') : null
   );
+  const [balanceBeforePayment] = useState<number | null>(() => {
+    if (!paymentReturn) return null;
+    const stored = Number(sessionStorage.getItem(BALANCE_BEFORE_PAYMENT_STORAGE_KEY));
+    return sessionStorage.getItem(BALANCE_BEFORE_PAYMENT_STORAGE_KEY) !== null && Number.isFinite(stored)
+      ? stored
+      : null;
+  });
+  const [hasLoadedWallet, setHasLoadedWallet] = useState(!isLoading);
   const checkPaymentRef = useRef(onCheckPayment);
   checkPaymentRef.current = onCheckPayment;
 
   useEffect(() => {
     if (!selectedPlan && purchasablePlans.length > 0) setSelectedPlan(purchasablePlans[0]);
   }, [purchasablePlans, selectedPlan]);
+
+  useEffect(() => {
+    if (!isLoading) setHasLoadedWallet(true);
+  }, [isLoading]);
 
   useEffect(() => {
     if (isOpen) void onLoadTransactions();
@@ -96,6 +109,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
         if (cancelled) return;
         if (status === 'CONFIRMED' || status === 'FAILED') {
           sessionStorage.removeItem(PENDING_PAYMENT_STORAGE_KEY);
+          sessionStorage.removeItem(BALANCE_BEFORE_PAYMENT_STORAGE_KEY);
           setReturnState(status === 'CONFIRMED' ? 'confirmed' : 'failed');
           void onLoadTransactions();
           return;
@@ -119,6 +133,9 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
 
   if (!isOpen) return null;
 
+  const displayedCredits =
+    balanceBeforePayment !== null && !hasLoadedWallet ? balanceBeforePayment : currentCredits;
+
   const handleRefreshBalance = async () => {
     setIsRefreshing(true);
     try {
@@ -136,6 +153,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
       const { reference, checkoutUrl } = await onCreatePayment(selectedPlan.id);
       if (!checkoutUrl) throw new Error('GeniusPay n’a pas renvoyé de page de paiement. Réessayez.');
       sessionStorage.setItem(PENDING_PAYMENT_STORAGE_KEY, reference);
+      sessionStorage.setItem(BALANCE_BEFORE_PAYMENT_STORAGE_KEY, String(currentCredits));
       window.location.assign(checkoutUrl);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Paiement indisponible');
@@ -211,7 +229,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                   <div className="text-left">
                     <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Solde</span>
                     <div className="flex items-baseline gap-1.5" aria-live="polite">
-                      <AnimatedNumber value={currentCredits} className="text-xl font-bold font-mono" />
+                      <AnimatedNumber value={displayedCredits} initialValue={balanceBeforePayment ?? undefined} className="text-xl font-bold font-mono" />
                       <span className="text-xs text-slate-300">crédits</span>
                     </div>
                   </div>
@@ -245,7 +263,7 @@ export const CreditsModal: React.FC<CreditsModalProps> = ({
                     Solde actuel
                   </span>
                   <div className="flex items-baseline gap-1.5 mt-0.5">
-                    <AnimatedNumber value={currentCredits} className="text-2xl font-bold font-mono tracking-tight text-white" />
+                    <AnimatedNumber value={displayedCredits} initialValue={balanceBeforePayment ?? undefined} className="text-2xl font-bold font-mono tracking-tight text-white" />
                     <span className="text-xs font-medium text-slate-300">crédits</span>
                   </div>
                 </div>
