@@ -47,7 +47,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
   ];
 
   return (
-    <nav className="w-full shrink-0 bg-white border-t border-slate-200 px-2 py-1 flex items-center justify-around z-30 select-none pb-safe">
+    <nav aria-label="Navigation principale" className="w-full shrink-0 bg-white border-t border-slate-200 px-2 py-1 flex items-center justify-around z-30 select-none pb-safe">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = current === tab.id;
@@ -56,6 +56,8 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
             key={tab.id}
             type="button"
             onClick={() => onTabChange(tab.id)}
+            aria-current={isActive ? 'page' : undefined}
+            aria-label={tab.label}
             className={`flex flex-col items-center justify-center flex-1 min-h-[48px] py-1 transition-all duration-150 ease-out active:scale-95 relative cursor-pointer ${
               isActive ? 'text-slate-900 font-semibold' : 'text-slate-400 hover:text-slate-600 font-medium'
             }`}

@@ -5,7 +5,6 @@ import { useAppContext } from '../AppContext';
 import { useEditingContext } from '../AppLayout';
 import { Invoice } from '../../types';
 import { createInvoiceDocumentData } from '../../utils/documentData';
-import { downloadDocumentExcel } from '../../utils/excelGenerator';
 
 export function InvoicesPage() {
   const navigate = useNavigate();
@@ -19,7 +18,9 @@ export function InvoicesPage() {
 
   const handleDownloadExcel = async (inv: Invoice) => {
     const client = ctx.clients.find((c) => c.id === inv.clientId);
+    const { downloadDocumentExcel } = await import('../../utils/excelGenerator');
     await downloadDocumentExcel(createInvoiceDocumentData(inv, client, ctx.settings));
+    ctx.notify('Excel téléchargé');
   };
 
   return (
@@ -37,6 +38,7 @@ export function InvoicesPage() {
         navigate(`/invoices/${inv.id}`);
       }}
       onDeleteInvoice={ctx.deleteInvoice}
+      onRestoreInvoice={ctx.saveInvoice}
       onDuplicateInvoice={ctx.duplicateInvoice}
       onUpdateInvoiceStatus={ctx.updateInvoiceStatus}
       onPreviewInvoice={handlePreviewInvoice}

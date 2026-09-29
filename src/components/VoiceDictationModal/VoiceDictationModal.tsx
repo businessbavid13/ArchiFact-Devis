@@ -15,6 +15,7 @@ import {
 import { DocumentItem } from '../../types';
 import { parseVoiceDictation } from '../../utils/voiceParser';
 import { formatCurrency } from '../../utils/formatting';
+import { DialogPanel } from '../Dialog/DialogPanel';
 
 // Web Speech API type declarations (non-standard, vendor-prefixed)
 interface SpeechRecognitionEvent extends Event {
@@ -118,12 +119,6 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
 
         recognitionRef.current = recognition;
 
-        // Auto-start listening on open
-        try {
-          recognition.start();
-        } catch {
-          // ignore if already started
-        }
       } catch (err) {
         console.warn('Error setting up speech recognition:', err);
       }
@@ -229,8 +224,8 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
   const totalCalculated = parsedItems.reduce((acc, it) => acc + it.total, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-modal-enter">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" role="presentation">
+      <DialogPanel onClose={onClose} aria-labelledby="voice-dictation-modal-title" className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] animate-modal-enter">
         {/* Header */}
         <div className="px-4 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
@@ -238,7 +233,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
               <Mic className="w-4 h-4 stroke-[2.2]" />
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
+              <h3 id="voice-dictation-modal-title" className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Dictée Vocale Chantier</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold uppercase tracking-wider">
                   Mains libres
@@ -527,7 +522,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
             </span>
           </button>
         </div>
-      </div>
+      </DialogPanel>
     </div>
   );
 };

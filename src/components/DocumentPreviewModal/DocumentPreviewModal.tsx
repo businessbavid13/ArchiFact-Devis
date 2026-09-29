@@ -35,6 +35,7 @@ import {
   SAMPLE_LOGO_BTP,
   SAMPLE_STAMP_OFFICIAL,
 } from '../../utils/documentAssets';
+import { DialogPanel } from '../Dialog/DialogPanel';
 
 interface DocumentPreviewModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
   const [isSharingNative, setIsSharingNative] = useState(false);
-  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showHeaderFooterCustomizer, setShowHeaderFooterCustomizer] = useState(false);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
@@ -171,8 +172,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
       setIsGeneratingPdf(true);
       await new Promise((r) => setTimeout(r, 80));
       await downloadDocumentPdf(pdfData);
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3500);
+      setDownloadSuccess('PDF téléchargé avec succès !');
+      setTimeout(() => setDownloadSuccess(null), 3500);
     } catch (err) {
       console.error('Error generating PDF:', err);
     } finally {
@@ -184,6 +185,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     try {
       setIsGeneratingExcel(true);
       await downloadDocumentExcel(pdfData);
+      setDownloadSuccess('Excel téléchargé avec succès !');
+      setTimeout(() => setDownloadSuccess(null), 3500);
     } catch (err) {
       console.error('Error generating Excel:', err);
     } finally {
@@ -331,14 +334,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         onChange={(e) => handleFileUpload(e, 'footerImageUrl')}
       />
 
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-        <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] relative">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200" role="presentation">
+        <DialogPanel onClose={onClose} aria-labelledby="document-preview-modal-title" className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] relative">
           
           {/* Notification Banner for PDF Download */}
           {downloadSuccess && (
-            <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div role="status" className="absolute top-14 left-1/2 -translate-x-1/2 z-30 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
               <CheckCircle2 className="w-4 h-4 text-white" />
-              <span>PDF téléchargé avec succès !</span>
+              <span>{downloadSuccess}</span>
             </div>
           )}
 
@@ -346,7 +349,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between z-10 shrink-0">
             <div className="flex items-center gap-2">
               <span className="font-bold text-sm tracking-wide">
-                Aperçu {isQuote ? 'Devis' : 'Facture'}
+                <span id="document-preview-modal-title">Aperçu {isQuote ? 'Devis' : 'Facture'}</span>
               </span>
               <span
                 className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full"
@@ -985,7 +988,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           {/* Share Options Drawer / Modal */}
           {showShareModal && (
             <div className="absolute inset-0 z-40 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-3 animate-in fade-in duration-150">
-              <div className="bg-white w-full max-w-sm rounded-2xl p-4 shadow-2xl border border-slate-200 space-y-3 animate-in slide-in-from-bottom-4 duration-200">
+              <DialogPanel onClose={() => setShowShareModal(false)} aria-label="Partager le document" className="bg-white w-full max-w-sm rounded-2xl p-4 shadow-2xl border border-slate-200 space-y-3 animate-in slide-in-from-bottom-4 duration-200">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <Share2 className="w-4 h-4 text-blue-600" />
@@ -1106,11 +1109,11 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     Fermer
                   </Button>
                 </div>
-              </div>
+              </DialogPanel>
             </div>
           )}
 
-        </div>
+        </DialogPanel>
       </div>
     </>
   );

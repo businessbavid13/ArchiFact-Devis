@@ -12,6 +12,7 @@ export function InvoiceFormPage() {
 
   const handleSave = (invoice: Invoice) => {
     ctx.saveInvoice(invoice);
+    ctx.notify('Facture enregistrée');
     setEditingInvoice(null);
     navigate('/invoices');
   };
@@ -29,6 +30,7 @@ export function InvoiceFormPage() {
       }}
       onOpenPreview={(data) => ctx.setPreviewData(data)}
       onOpenPhotoScan={() => ctx.openPhotoScan('invoice')}
+      onAddClient={ctx.addClient}
     />
   );
 }

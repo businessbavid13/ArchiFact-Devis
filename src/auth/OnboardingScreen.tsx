@@ -75,7 +75,7 @@ function QuoteIllustration() {
       <motion.div
         className="absolute bottom-5 left-7 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-400 text-white shadow-xl shadow-blue-300/70"
         animate={{ y: [0, -8, 0], rotate: [0, 4, 0] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 3.5, repeat: 2, ease: 'easeInOut' }}
       >
         <FileText className="h-8 w-8" />
       </motion.div>
@@ -108,7 +108,7 @@ function ScanIllustration() {
             <motion.span
               className="absolute left-0 right-0 top-0 h-0.5 bg-cyan-300 shadow-[0_0_12px_#67e8f9]"
               animate={{ y: [0, 104, 0] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{ duration: 2.2, repeat: 2, ease: 'easeInOut' }}
             />
           </div>
           <Camera className="absolute bottom-5 left-1/2 h-8 w-8 -translate-x-1/2 text-white" />
@@ -117,7 +117,7 @@ function ScanIllustration() {
       <motion.div
         className="absolute right-4 top-14 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-400 text-white shadow-xl shadow-blue-300/70"
         animate={{ scale: [1, 1.08, 1], rotate: [0, 3, 0] }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 2.4, repeat: 2, ease: 'easeInOut' }}
       >
         <Sparkles className="h-8 w-8" />
       </motion.div>
@@ -161,7 +161,7 @@ function ExportIllustration() {
       <motion.div
         className="absolute bottom-5 left-2 flex items-center gap-2 rounded-2xl border border-red-100 bg-white px-3 py-2 text-red-600 shadow-xl shadow-red-100"
         animate={{ y: [0, -5, 0] }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 2.8, repeat: 2, ease: 'easeInOut' }}
       >
         <Download className="h-6 w-6" />
         <span className="text-xs font-black">PDF</span>
@@ -169,7 +169,7 @@ function ExportIllustration() {
       <motion.div
         className="absolute bottom-0 right-1 flex items-center gap-2 rounded-2xl border border-emerald-100 bg-white px-3 py-2 text-emerald-600 shadow-xl shadow-emerald-100"
         animate={{ y: [0, 5, 0] }}
-        transition={{ duration: 3.1, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 3.1, repeat: 2, ease: 'easeInOut' }}
       >
         <FileSpreadsheet className="h-6 w-6" />
         <span className="text-xs font-black">Excel</span>
@@ -177,7 +177,7 @@ function ExportIllustration() {
       <motion.div
         className="absolute right-2 top-4 grid h-14 w-14 place-items-center rounded-full bg-teal-600 text-white shadow-xl shadow-teal-200"
         animate={{ scale: [1, 1.08, 1] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 2, repeat: 2, ease: 'easeInOut' }}
       >
         <Send className="h-6 w-6" />
       </motion.div>
@@ -248,7 +248,7 @@ export function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
                 alt=""
                 className="h-72 w-full max-w-sm object-contain"
                 animate={shouldReduceMotion ? undefined : { y: [0, -5, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: 4, repeat: shouldReduceMotion ? 0 : 2, ease: 'easeInOut' }}
               />
             </motion.div>
             <div className="text-center">

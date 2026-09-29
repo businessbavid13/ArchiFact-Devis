@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, Camera, Check, Download, FileText, Loader2, Mail, ReceiptText, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, FileText, Loader2, Mail } from 'lucide-react';
 
 interface AuthScreenProps {
   onSendOtp: (email: string) => Promise<{ error: string | null }>;
@@ -50,7 +50,7 @@ function ProductIllustration() {
       <motion.div
         className="relative flex h-24 w-20 flex-col justify-between rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-400 p-3 text-white shadow-xl shadow-blue-200/70 sm:h-28 sm:w-24 lg:h-36 lg:w-28 lg:p-4"
         animate={shouldReduceMotion ? undefined : { y: [0, -7, 0], rotate: [0, 2, 0] }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 3.2, repeat: 2, ease: 'easeInOut' }}
       >
         <div className="h-2 w-10 rounded-full bg-white/90" />
         <div className="space-y-1.5">
@@ -63,129 +63,13 @@ function ProductIllustration() {
       <motion.div
         className="absolute ml-24 grid h-11 w-11 place-items-center rounded-full bg-teal-500 text-white shadow-lg shadow-teal-200/80 sm:ml-28 lg:ml-36 lg:h-14 lg:w-14"
         animate={shouldReduceMotion ? undefined : { scale: [1, 1.1, 1] }}
-        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 2.2, repeat: 2, ease: 'easeInOut' }}
       >
         <Check className="h-6 w-6" strokeWidth={3} />
       </motion.div>
     </motion.div>
   );
 
-  return (
-    <div className="relative mx-auto h-52 w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-teal-50 p-4 shadow-inner sm:h-56 lg:h-64 lg:p-5">
-      <motion.img
-        src="/branding/onboarding-documents.webp"
-        alt="Documents ArchiFact prêts à être envoyés"
-        className="absolute inset-0 z-10 h-full w-full object-contain p-2"
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-      />
-      <motion.div
-        className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-blue-200/40 blur-2xl"
-        animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.12, 1], opacity: [0.45, 0.7, 0.45] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute -bottom-20 -left-8 h-44 w-44 rounded-full bg-teal-200/40 blur-2xl"
-        animate={shouldReduceMotion ? { opacity: 0.45 } : { scale: [1.08, 1, 1.08], opacity: [0.55, 0.35, 0.55] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      <div className="absolute inset-x-3 bottom-4 top-4 flex items-center justify-between gap-1">
-        <motion.div
-          className="flex w-[22%] flex-col items-center gap-2"
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.45 }}
-        >
-          <div className="relative grid h-12 w-12 place-items-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-300/70">
-            <FileText className="h-6 w-6 text-teal-300" />
-            <Camera className="absolute -bottom-1 -right-2 h-5 w-5 rounded-md bg-blue-600 p-1 text-white" />
-          </div>
-          <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-600">Photo</span>
-        </motion.div>
-
-        {[0, 1, 2].map((index) => (
-          <motion.span
-            key={index}
-            className="h-0.5 w-[7%] rounded-full bg-gradient-to-r from-blue-300 to-teal-300"
-            animate={shouldReduceMotion ? { opacity: 0.7 } : { opacity: [0.25, 1, 0.25] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: index * 0.35, ease: 'easeInOut' }}
-          />
-        ))}
-
-        <motion.div
-          className="flex w-[22%] flex-col items-center gap-2"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.45, delay: 0.15 }}
-        >
-          <motion.div
-            className="grid h-12 w-12 place-items-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-300/70"
-            animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.12, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Sparkles className="h-6 w-6" />
-          </motion.div>
-          <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-700">IA</span>
-        </motion.div>
-
-        <motion.div
-          className="flex w-[26%] flex-col items-center gap-2"
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.45, delay: 0.3 }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={documentType}
-              className="w-full rounded-xl border-2 border-teal-100 bg-white p-2 shadow-lg shadow-teal-100/70"
-              initial={{ opacity: 0, y: 6, rotate: 3 }}
-              animate={{ opacity: 1, y: 0, rotate: 3 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="flex items-center justify-between">
-                <ReceiptText className="h-4 w-4 text-teal-600" />
-                <span className="text-[8px] font-black text-emerald-600">PRÊT</span>
-              </div>
-              <div className="mt-2 h-1.5 w-4/5 rounded-full bg-slate-300" />
-              <div className="mt-1.5 h-1.5 w-3/5 rounded-full bg-slate-200" />
-              <div className="mt-2 rounded bg-teal-50 px-1 py-1 text-center text-[8px] font-black text-slate-700">
-                {documentType}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-          <span className="text-[9px] font-extrabold uppercase tracking-wider text-teal-700">Prêt</span>
-        </motion.div>
-
-        <motion.div
-          className="flex w-[18%] flex-col items-center gap-2"
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.45, delay: 0.45 }}
-        >
-          <div className="grid h-11 w-11 place-items-center rounded-full bg-teal-600 text-white shadow-lg shadow-teal-200/80">
-            <Send className="h-5 w-5" />
-          </div>
-          <div className="flex gap-1 text-teal-700">
-            <Download className="h-3.5 w-3.5" />
-            <Send className="h-3.5 w-3.5" />
-          </div>
-        </motion.div>
-      </div>
-
-      {[{ left: '9%', top: '15%' }, { left: '82%', top: '54%' }, { left: '26%', top: '83%' }].map((dot, index) => (
-        <motion.span
-          key={`${dot.left}-${dot.top}`}
-          className="absolute h-2.5 w-2.5 rounded-full bg-blue-500"
-          style={dot}
-          animate={shouldReduceMotion ? { opacity: 0.75 } : { scale: [1, 1.7, 1], opacity: [0.45, 1, 0.45] }}
-          transition={{ duration: 2.4, repeat: Infinity, delay: index * 0.7, ease: 'easeInOut' }}
-        />
-      ))}
-    </div>
-  );
 }
 
 export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthScreenProps) {
@@ -194,8 +78,17 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const hasTypedEmail = email.trim().length > 0;
   const isValidEmail = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()), [email]);
+
+  useEffect(() => {
+    if (resendCooldown === 0) return;
+    const timer = window.setInterval(() => {
+      setResendCooldown((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendCooldown]);
 
   const handleSendCode = async (event?: React.FormEvent | React.MouseEvent) => {
     event?.preventDefault();
@@ -215,6 +108,7 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
     }
     setEmail(normalizedEmail);
     setStep('code');
+    setResendCooldown(30);
   };
 
   const handleVerifyCode = async (event: React.FormEvent) => {
@@ -393,10 +287,10 @@ export function AuthScreen({ onSendOtp, onVerifyOtp, onSignInWithGoogle }: AuthS
                     <button
                       type="button"
                       onClick={handleSendCode}
-                      disabled={isLoading}
+                      disabled={isLoading || resendCooldown > 0}
                       className="mt-5 w-full text-center text-sm font-semibold text-blue-600 underline-offset-4 hover:underline"
                     >
-                      Renvoyer le code
+                      {resendCooldown > 0 ? `Renvoyer le code dans ${resendCooldown}s` : 'Renvoyer le code'}
                     </button>
                   </motion.form>
                 )}

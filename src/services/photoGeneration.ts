@@ -155,51 +155,8 @@ export async function processPhotoDocument(options: ScanOptions): Promise<PhotoS
     };
   }
 
-  // User uploaded custom scanned page(s)
-  if (options.scannedPages && options.scannedPages.length > 0) {
-    const count = options.scannedPages.length;
-    const combinedItems: Array<{ name: string; description: string; quantity: number; unitPrice: number }> = [];
-
-    // Realistic item templates per page
-    const pageItemTemplates = [
-      [
-        { name: 'Fourniture & Pose Matériaux A', description: 'Extrait Page 1 • Norme qualité', quantity: 10, unitPrice: 7500 },
-        { name: 'Accessoires de montage & fixation', description: 'Extrait Page 1 • Lot complet', quantity: 4, unitPrice: 12000 },
-        { name: 'Matière première brute (Lot)', description: 'Extrait Page 1 • Haute résistance', quantity: 2, unitPrice: 35000 },
-      ],
-      [
-        { name: 'Éléments de raccordement B', description: 'Extrait Page 2 • Conforme devis', quantity: 6, unitPrice: 9500 },
-        { name: 'Finitions de surface & étanchéité', description: 'Extrait Page 2 • Traitement spécial', quantity: 3, unitPrice: 18500 },
-        { name: 'Main d’œuvre qualifiée (Journée)', description: 'Extrait Page 2 • Équipe technique', quantity: 2, unitPrice: 40000 },
-      ],
-      [
-        { name: 'Contrôle technique & mise en service', description: 'Extrait Page 3 • Certification', quantity: 1, unitPrice: 25000 },
-        { name: 'Nettoyage & évacuation de chantier', description: 'Extrait Page 3 • Forfait fin de travaux', quantity: 1, unitPrice: 15000 },
-      ],
-    ];
-
-    options.scannedPages.forEach((page, pIdx) => {
-      const template = pageItemTemplates[pIdx % pageItemTemplates.length];
-      template.forEach((item, iIdx) => {
-        combinedItems.push({
-          name: `${item.name} (${page.name || `P.${pIdx + 1}`})`,
-          description: `Numérisé depuis la page ${pIdx + 1}`,
-          quantity: item.quantity + (iIdx % 2),
-          unitPrice: item.unitPrice,
-        });
-      });
-    });
-
-    return {
-      type: options.type,
-      clientName: count > 1 ? 'Client Chantier Multi-pages' : 'Client Scan Mobile',
-      clientPhone: '0708091011',
-      date: '14/09/2026',
-      items: combinedItems,
-      notes: `Document fusionné avec succès à partir de ${count} pages scannées.`,
-      scannedPagesCount: count,
-      scannedPagesUrls: options.scannedPages.map((p) => p.previewUrl),
-    };
+  if (options.imageFiles?.length || options.scannedPages?.length) {
+    throw new Error('Les images personnalisées doivent être analysées par le service IA.');
   }
 
   // Fallback default

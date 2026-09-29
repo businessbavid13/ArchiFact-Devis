@@ -6,6 +6,7 @@ import { formatCurrency, getTodayFormatted, getFutureDateFormatted } from '../..
 import { calculateDocumentTotals } from '../../utils/calculations';
 import { VoiceDictationModal } from '../../components/VoiceDictationModal/VoiceDictationModal';
 import { DocumentPdfData } from '../../utils/pdfGenerator';
+import { DialogPanel } from '../../components/Dialog/DialogPanel';
 
 interface InvoiceFormScreenProps {
   initialInvoice?: Invoice | null;
@@ -16,6 +17,7 @@ interface InvoiceFormScreenProps {
   onBack: () => void;
   onOpenPreview: (data: DocumentPdfData) => void;
   onOpenPhotoScan: () => void;
+  onAddClient: (client: Client) => void;
 }
 
 export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
@@ -27,6 +29,7 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
   onBack,
   onOpenPreview,
   onOpenPhotoScan,
+  onAddClient,
 }) => {
   const [invoiceNumber, setInvoiceNumber] = useState(
     initialInvoice ? initialInvoice.number : `FACT-${String(Math.floor(Math.random() * 9000) + 1000)}`
@@ -68,6 +71,9 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
   const [customItemName, setCustomItemName] = useState('');
   const [customItemPrice, setCustomItemPrice] = useState<number>(0);
   const [customItemQty, setCustomItemQty] = useState<number>(1);
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
 
   // Calculations
   const totals = calculateDocumentTotals(items, discountType, discountValue, taxRate);
@@ -143,6 +149,22 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
     onSave(newInvoice);
   };
 
+  const handleCreateClient = () => {
+    const name = newClientName.trim();
+    if (!name) return;
+    const client: Client = {
+      id: crypto.randomUUID(),
+      name,
+      phone: newClientPhone.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    onAddClient(client);
+    setSelectedClientId(client.id);
+    setNewClientName('');
+    setNewClientPhone('');
+    setIsCreatingClient(false);
+  };
+
   const handleOpenApercu = () => {
     const selectedClient = clients.find((c) => c.id === selectedClientId);
     onOpenPreview({
@@ -171,6 +193,13 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
   return (
     <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden relative">
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-28">
+        <nav aria-label="Fil d’Ariane" className="flex items-center gap-2 text-xs text-slate-500">
+          <span>Accueil</span>
+          <span aria-hidden="true">/</span>
+          <span>Factures</span>
+          <span aria-hidden="true">/</span>
+          <strong className="font-semibold text-slate-900">{initialInvoice ? 'Modifier' : 'Nouveau'}</strong>
+        </nav>
         {/* Document Number Banner */}
         <div className="bg-white rounded-lg border border-slate-200 p-3.5  flex items-center justify-between">
           <div>
@@ -224,6 +253,13 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
           <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
             <User className="w-3.5 h-3.5 text-slate-400" />
             Client
+            <button
+              type="button"
+              onClick={() => setIsCreatingClient((current) => !current)}
+              className="ml-auto inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-[11px] font-bold text-blue-700 hover:bg-blue-50"
+            >
+              <Plus className="h-3.5 w-3.5" /> Nouveau
+            </button>
           </label>
           <div className="relative">
             <select
@@ -246,6 +282,26 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
             <p className="text-[11px] text-slate-400 px-1">
               {selectedClient.phone || 'Email non fourni'} • {selectedClient.address || 'Abidjan'}
             </p>
+          )}
+          {isCreatingClient && (
+            <div className="mt-2 grid gap-2 rounded-lg border border-blue-100 bg-blue-50/60 p-3 sm:grid-cols-[1fr_10rem_auto]">
+              <input
+                value={newClientName}
+                onChange={(event) => setNewClientName(event.target.value)}
+                placeholder="Nom du client"
+                className="min-h-10 rounded-md border border-slate-200 bg-white px-3 text-xs"
+                autoFocus
+              />
+              <input
+                value={newClientPhone}
+                onChange={(event) => setNewClientPhone(event.target.value)}
+                placeholder="Téléphone"
+                className="min-h-10 rounded-md border border-slate-200 bg-white px-3 text-xs"
+              />
+              <Button type="button" size="sm" onClick={handleCreateClient} disabled={!newClientName.trim()}>
+                Ajouter
+              </Button>
+            </div>
           )}
         </div>
 
@@ -517,9 +573,9 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
       {/* Article Picker Sheet */}
       {isArticlePickerOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-xl overflow-hidden max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-200">
+          <DialogPanel onClose={() => setIsArticlePickerOpen(false)} aria-labelledby="invoice-article-picker-title" className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-xl overflow-hidden max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-200">
             <div className="bg-slate-900 text-white p-3.5 flex items-center justify-between">
-              <span className="text-sm font-bold">Sélectionner un article</span>
+              <span id="invoice-article-picker-title" className="text-sm font-bold">Sélectionner un article</span>
               <button
                 type="button"
                 onClick={() => setIsArticlePickerOpen(false)}
@@ -593,7 +649,7 @@ export const InvoiceFormScreen: React.FC<InvoiceFormScreenProps> = ({
                 </Button>
               </div>
             </div>
-          </div>
+          </DialogPanel>
         </div>
       )}
       {/* Voice Dictation Modal for Hands-free Job Site Input */}

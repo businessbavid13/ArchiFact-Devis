@@ -12,6 +12,7 @@ export function QuoteFormPage() {
 
   const handleSave = (quote: Quote) => {
     ctx.saveQuote(quote);
+    ctx.notify('Devis enregistré');
     setEditingQuote(null);
     navigate('/quotes');
   };
@@ -29,6 +30,7 @@ export function QuoteFormPage() {
       }}
       onOpenPreview={(data) => ctx.setPreviewData(data)}
       onOpenPhotoScan={() => ctx.openPhotoScan('quote')}
+      onAddClient={ctx.addClient}
     />
   );
 }

@@ -3,6 +3,24 @@
 @theme {
   --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --motion-fast: 150ms;
+  --motion-standard: 200ms;
+  --motion-slow: 350ms;
+}
+
+.standalone-status-bar {
+  display: none;
+}
+
+@media (display-mode: standalone) and (max-width: 1023px) {
+  .standalone-status-bar {
+    display: flex;
+  }
 }
 
 @layer base {
@@ -18,6 +36,11 @@
   body {
     min-height: 100dvh;
     overscroll-behavior-y: none;
+  }
+
+  :focus-visible {
+    outline: 3px solid rgb(99 102 241 / 0.55);
+    outline-offset: 2px;
   }
 }
 
@@ -43,9 +66,20 @@
 }
 
 .animate-modal-enter {
-  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalEnter var(--motion-standard) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in-fast {
-  animation: fadeIn 0.15s ease-out forwards;
+  animation: fadeIn var(--motion-fast) ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

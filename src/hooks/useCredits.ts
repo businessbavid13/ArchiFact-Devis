@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { CreditPlan, PhotoScanExtract } from '../types';
+import { supabase } from '../lib/supabase';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? (import.meta.env.PROD ? '' : 'http://localhost:5000');
 
@@ -8,6 +9,17 @@ interface CreditWallet {
   plan: string;
   credits_total: number;
   credits_balance: number;
+}
+
+export type PaymentStatus = 'PENDING' | 'CONFIRMED' | 'FAILED';
+
+export interface CreditTransaction {
+  id: string;
+  amount: number;
+  type: 'PURCHASE' | 'AI_USAGE' | 'BONUS' | 'REFUND' | 'ADJUSTMENT';
+  operation: string | null;
+  status: 'RESERVED' | 'COMPLETED' | 'REFUNDED' | 'CONFIRMED';
+  created_at: string;
 }
 
 interface CreditReservation {
@@ -37,6 +49,30 @@ export function useCredits(session: Session | null) {
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [transactionsError, setTransactionsError] = useState<string | null>(null);
+
+  const loadTransactions = useCallback(async () => {
+    if (!session) {
+      setTransactions([]);
+      return;
+    }
+    setTransactionsLoading(true);
+    const { data, error: queryError } = await supabase
+      .from('credit_transactions')
+      .select('id, amount, type, operation, status, created_at')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (queryError) {
+      setTransactionsError("Impossible de charger l'historique");
+    } else {
+      setTransactions((data ?? []) as CreditTransaction[]);
+      setTransactionsError(null);
+    }
+    setTransactionsLoading(false);
+  }, [session]);
 
   const refresh = useCallback(async () => {
     if (!session) {
@@ -103,17 +139,23 @@ export function useCredits(session: Session | null) {
     await refresh();
   }, [refresh, session]);
 
-  const createPayment = useCallback(async (
-    planId: string,
-    paymentMethod: string,
-    phoneNumber: string
-  ) => {
+  const createPayment = useCallback(async (planId: string) => {
     if (!session) throw new Error('Session utilisateur absente');
-    return apiRequest<{ reference: string; provider: unknown }>(session, '/api/payments/geniuspay/create', {
+    return apiRequest<{ reference: string; checkoutUrl: string | null }>(session, '/api/payments/geniuspay/create', {
       method: 'POST',
-      body: JSON.stringify({ planId, paymentMethod, phoneNumber }),
+      body: JSON.stringify({ planId }),
     });
   }, [session]);
+
+  const checkPayment = useCallback(async (reference: string) => {
+    if (!session) throw new Error('Session utilisateur absente');
+    const result = await apiRequest<{ reference: string; status: PaymentStatus }>(
+      session,
+      `/api/payments/geniuspay/${encodeURIComponent(reference)}`
+    );
+    if (result.status === 'CONFIRMED') await refresh();
+    return result;
+  }, [refresh, session]);
 
   const analyzeImages = useCallback(async (files: File[]): Promise<PhotoScanExtract> => {
     if (!session) throw new Error('Session utilisateur absente');
@@ -142,10 +184,15 @@ export function useCredits(session: Session | null) {
     isLoading,
     error,
     refresh,
+    transactions,
+    transactionsLoading,
+    transactionsError,
+    loadTransactions,
     reserveCredits,
     completeReservation,
     refundReservation,
     createPayment,
+    checkPayment,
     analyzeImages,
   };
 }

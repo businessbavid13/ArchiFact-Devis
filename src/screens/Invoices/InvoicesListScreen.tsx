@@ -30,6 +30,7 @@ interface InvoicesListScreenProps {
   onScanPhoto: () => void;
   onSelectInvoice: (invoice: Invoice) => void;
   onDeleteInvoice: (id: string) => void;
+  onRestoreInvoice: (invoice: Invoice) => void;
   onDuplicateInvoice?: (invoice: Invoice) => void;
   onUpdateInvoiceStatus?: (id: string, newStatus: 'paid' | 'pending' | 'overdue') => void;
   onPreviewInvoice?: (invoice: Invoice) => void;
@@ -44,6 +45,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
   onScanPhoto,
   onSelectInvoice,
   onDeleteInvoice,
+  onRestoreInvoice,
   onDuplicateInvoice,
   onUpdateInvoiceStatus,
   onPreviewInvoice,
@@ -56,6 +58,13 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
     clientName: string;
     amount: number;
   } | null>(null);
+  const [undoInvoice, setUndoInvoice] = useState<Invoice | null>(null);
+
+  const handleDeleteInvoice = (invoice: Invoice) => {
+    onDeleteInvoice(invoice.id);
+    setUndoInvoice(invoice);
+    window.setTimeout(() => setUndoInvoice((current) => current?.id === invoice.id ? null : current), 5000);
+  };
 
   const getClient = (clientId: string) => {
     return clients.find((item) => item.id === clientId);
@@ -286,9 +295,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
               leftActionIcon={<Trash2 className="w-4 h-4 text-white" />}
               leftActionBg="bg-rose-600"
               onSwipeLeft={() => {
-                if (confirm(`Voulez-vous supprimer la facture ${inv.number} ?`)) {
-                  onDeleteInvoice(inv.id);
-                }
+                handleDeleteInvoice(inv);
               }}
               onClick={() => onSelectInvoice(inv)}
             >
@@ -385,9 +392,7 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm('Voulez-vous supprimer cette facture ?')) {
-                          onDeleteInvoice(inv.id);
-                        }
+                        handleDeleteInvoice(inv);
                       }}
                       className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                       title="Supprimer"
@@ -425,6 +430,22 @@ export const InvoicesListScreen: React.FC<InvoicesListScreenProps> = ({
           ))
         )}
       </div>
+
+      {undoInvoice && (
+        <div className="fixed bottom-20 left-4 right-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg bg-slate-900 px-4 py-3 text-white shadow-xl">
+          <span className="text-xs">Facture supprimée</span>
+          <button
+            type="button"
+            onClick={() => {
+              onRestoreInvoice(undoInvoice);
+              setUndoInvoice(null);
+            }}
+            className="min-h-9 rounded-md px-3 text-xs font-bold text-blue-200 hover:bg-white/10"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
 
       {/* Floating Action Button */}
       <div className="fixed bottom-16 right-5 z-20">

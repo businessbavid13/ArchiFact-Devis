@@ -5,7 +5,6 @@ import { useAppContext } from '../AppContext';
 import { useEditingContext } from '../AppLayout';
 import { Quote } from '../../types';
 import { createQuoteDocumentData } from '../../utils/documentData';
-import { downloadDocumentExcel } from '../../utils/excelGenerator';
 
 export function QuotesPage() {
   const navigate = useNavigate();
@@ -19,7 +18,9 @@ export function QuotesPage() {
 
   const handleDownloadExcel = async (quo: Quote) => {
     const client = ctx.clients.find((c) => c.id === quo.clientId);
+    const { downloadDocumentExcel } = await import('../../utils/excelGenerator');
     await downloadDocumentExcel(createQuoteDocumentData(quo, client, ctx.settings));
+    ctx.notify('Excel téléchargé');
   };
 
   const handleConvertToInvoice = (quote: Quote) => {
@@ -43,6 +44,7 @@ export function QuotesPage() {
         navigate(`/quotes/${quo.id}`);
       }}
       onDeleteQuote={ctx.deleteQuote}
+      onRestoreQuote={ctx.saveQuote}
       onDuplicateQuote={ctx.duplicateQuote}
       onUpdateQuoteStatus={ctx.updateQuoteStatus}
       onConvertToInvoice={handleConvertToInvoice}

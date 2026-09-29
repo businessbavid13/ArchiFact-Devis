@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 import { useInvoices, useQuotes, useArticles, useClients, useSettings, useCredits } from '../hooks';
 import { Invoice, Quote, Article, Client, CompanySettings, PhotoScanExtract } from '../types';
 import { DocumentPdfData } from '../utils/pdfGenerator';
@@ -37,11 +37,22 @@ interface AppContextType {
   credits: number;
   plan: string;
   creditPlans: ReturnType<typeof useCredits>['plans'];
+  creditsLoading: ReturnType<typeof useCredits>['isLoading'];
+  creditsError: ReturnType<typeof useCredits>['error'];
   reserveCredits: ReturnType<typeof useCredits>['reserveCredits'];
   completeCreditReservation: ReturnType<typeof useCredits>['completeReservation'];
   refundCreditReservation: ReturnType<typeof useCredits>['refundReservation'];
   createPayment: ReturnType<typeof useCredits>['createPayment'];
+  checkPayment: ReturnType<typeof useCredits>['checkPayment'];
   analyzeImages: ReturnType<typeof useCredits>['analyzeImages'];
+  refreshCredits: ReturnType<typeof useCredits>['refresh'];
+  creditTransactions: ReturnType<typeof useCredits>['transactions'];
+  creditTransactionsLoading: ReturnType<typeof useCredits>['transactionsLoading'];
+  creditTransactionsError: ReturnType<typeof useCredits>['transactionsError'];
+  loadCreditTransactions: ReturnType<typeof useCredits>['loadTransactions'];
+
+  toastMessage: string | null;
+  notify: (message: string) => void;
 
   // UI state
   previewData: DocumentPdfData | null;
@@ -93,6 +104,14 @@ export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }
   const [isPhotoScanOpen, setIsPhotoScanOpen] = useState(false);
   const [photoScanTarget, setPhotoScanTarget] = useState<'invoice' | 'quote' | 'article'>('invoice');
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | undefined>(undefined);
+
+  const notify = useCallback((message: string) => {
+    setToastMessage(message);
+    window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToastMessage(null), 2800);
+  }, []);
 
   const openPhotoScan = (type: 'invoice' | 'quote' | 'article') => {
     setPhotoScanTarget(type);
@@ -198,11 +217,21 @@ export function AppProvider({ children, onEditInvoice, onEditQuote, onNavigate }
     credits: creditsHook.credits,
     plan: creditsHook.plan,
     creditPlans: creditsHook.plans,
+    creditsLoading: creditsHook.isLoading,
+    creditsError: creditsHook.error,
     reserveCredits: creditsHook.reserveCredits,
     completeCreditReservation: creditsHook.completeReservation,
     refundCreditReservation: creditsHook.refundReservation,
     createPayment: creditsHook.createPayment,
+    checkPayment: creditsHook.checkPayment,
     analyzeImages: creditsHook.analyzeImages,
+    refreshCredits: creditsHook.refresh,
+    creditTransactions: creditsHook.transactions,
+    creditTransactionsLoading: creditsHook.transactionsLoading,
+    creditTransactionsError: creditsHook.transactionsError,
+    loadCreditTransactions: creditsHook.loadTransactions,
+    toastMessage,
+    notify,
     previewData,
     setPreviewData,
     isPhotoScanOpen,

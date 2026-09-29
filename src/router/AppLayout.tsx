@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import { MobileStatusBar } from '../components/StatusBar/MobileStatusBar';
 import { AppHeader } from '../components/Header/AppHeader';
 import { BottomTabBar, TabType } from '../components/BottomTabs/BottomTabBar';
-import { PhotoScanModal } from '../components/PhotoScanModal/PhotoScanModal';
-import { CreditsModal } from '../components/CreditsModal/CreditsModal';
-import { DocumentPreviewModal } from '../components/DocumentPreviewModal/DocumentPreviewModal';
+import { SidebarNav } from '../components/Sidebar/SidebarNav';
 import { AppProvider, useAppContext } from './AppContext';
 import { Invoice, Quote } from '../types';
+import type { PaymentReturn } from '../components/CreditsModal/CreditsModal';
+
+const PhotoScanModal = lazy(() =>
+  import('../components/PhotoScanModal/PhotoScanModal').then(({ PhotoScanModal }) => ({ default: PhotoScanModal }))
+);
+const CreditsModal = lazy(() =>
+  import('../components/CreditsModal/CreditsModal').then(({ CreditsModal }) => ({ default: CreditsModal }))
+);
+const DocumentPreviewModal = lazy(() =>
+  import('../components/DocumentPreviewModal/DocumentPreviewModal').then(({ DocumentPreviewModal }) => ({ default: DocumentPreviewModal }))
+);
 
 /**
  * Maps URL pathname to the active BottomTab
@@ -43,6 +53,23 @@ function AppLayoutInner() {
 
   const activeTab = pathToTab(location.pathname);
 
+  useEffect(() => {
+    ctx.setIsPhotoScanOpen(false);
+    ctx.setIsCreditsModalOpen(false);
+    ctx.setPreviewData(null);
+  }, [location.pathname]);
+
+  const [paymentReturn, setPaymentReturn] = useState<PaymentReturn | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const outcome = params.get('payment');
+    if (outcome !== 'success' && outcome !== 'failed') return;
+    setPaymentReturn({ outcome, reference: params.get('reference') });
+    ctx.setIsCreditsModalOpen(true);
+    navigate({ pathname: location.pathname, search: '' }, { replace: true });
+  }, [location.search]);
+
   const handleTabChange = (tab: TabType) => {
     navigate(tabToPath(tab));
   };
@@ -70,6 +97,12 @@ function AppLayoutInner() {
         title: 'Personnalisation',
         showClose: true,
         onClose: () => navigate('/settings'),
+      };
+    }
+    if (path === '/') {
+      return {
+        title: 'Accueil',
+        subtitle: 'Votre activité en un coup d’œil',
       };
     }
 
@@ -106,22 +139,35 @@ function AppLayoutInner() {
 
   return (
     <div className="min-h-[100dvh] bg-slate-900 flex items-center justify-center p-0 sm:p-4 select-none font-sans text-slate-800">
-      <div className="w-full min-h-[100dvh] bg-white shadow-2xl overflow-hidden flex flex-col relative sm:max-w-[560px] sm:min-h-0 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:max-w-[1400px] lg:h-[calc(100dvh-2rem)] lg:rounded-[28px]">
+      <div className="w-full min-h-[100dvh] bg-white shadow-2xl overflow-hidden flex flex-col relative sm:max-w-[560px] sm:min-h-0 sm:h-[calc(100dvh-2rem)] sm:rounded-[32px] lg:max-w-none lg:h-[calc(100dvh-2rem)] lg:rounded-none lg:overflow-visible">
         <MobileStatusBar />
 
-        <AppHeader
-          {...headerProps}
-          credits={ctx.credits}
-          onCreditsClick={() => ctx.setIsCreditsModalOpen(true)}
-        />
+        <div className="flex min-h-0 flex-1">
+          <SidebarNav
+            activeTab={activeTab}
+            isHome={location.pathname === '/'}
+            onNavigate={navigate}
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <AppHeader
+              {...headerProps}
+              credits={ctx.credits}
+              onCreditsClick={() => ctx.setIsCreditsModalOpen(true)}
+            />
 
-        <main className="flex-1 flex flex-col overflow-hidden relative">
-          <Outlet />
-        </main>
+            <main className="flex-1 flex flex-col overflow-hidden relative">
+              <Outlet />
+            </main>
 
-        <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
+            <div className="lg:hidden">
+              <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+          </div>
+        </div>
 
         {/* Global Modals */}
+        <Suspense fallback={null}>
+        {ctx.isPhotoScanOpen && (
         <PhotoScanModal
           isOpen={ctx.isPhotoScanOpen}
           onClose={() => ctx.setIsPhotoScanOpen(false)}
@@ -144,14 +190,29 @@ function AppLayoutInner() {
           }}
           onExtracted={ctx.handlePhotoScanExtracted}
         />
+        )}
 
+        {ctx.isCreditsModalOpen && (
         <CreditsModal
           isOpen={ctx.isCreditsModalOpen}
-          onClose={() => ctx.setIsCreditsModalOpen(false)}
+          onClose={() => {
+            setPaymentReturn(null);
+            ctx.setIsCreditsModalOpen(false);
+          }}
           currentCredits={ctx.credits}
           plans={ctx.creditPlans}
+          isLoading={ctx.creditsLoading}
+          loadError={ctx.creditsError}
           onCreatePayment={ctx.createPayment}
+          onCheckPayment={ctx.checkPayment}
+          paymentReturn={paymentReturn}
+          onRefreshCredits={ctx.refreshCredits}
+          transactions={ctx.creditTransactions}
+          transactionsLoading={ctx.creditTransactionsLoading}
+          transactionsError={ctx.creditTransactionsError}
+          onLoadTransactions={ctx.loadCreditTransactions}
         />
+        )}
 
         {ctx.previewData && (
           <DocumentPreviewModal
@@ -161,6 +222,16 @@ function AppLayoutInner() {
             {...ctx.previewData}
           />
         )}
+        </Suspense>
+
+        <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex justify-center px-4 lg:bottom-8">
+          {ctx.toastMessage && (
+            <div role="status" className="flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+              {ctx.toastMessage}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
